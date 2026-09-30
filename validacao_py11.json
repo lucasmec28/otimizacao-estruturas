@@ -1,0 +1,28 @@
+{
+  "version": "M23-PY-11",
+  "python": "3.12.14",
+  "unique_tests_verified": 52,
+  "new_tests": 7,
+  "result": "PASS after UI test expectations updated for automatic default",
+  "runs": [
+    {
+      "command": "python -m unittest discover",
+      "tests": 51,
+      "passed": 49,
+      "failed": 2,
+      "reason": "Two existing UI tests assumed manual combinations by default; expectations were updated and both rerun successfully."
+    },
+    {
+      "command": "python -m unittest test_combinations test_search test_ultimate",
+      "tests": 15,
+      "passed": 15,
+      "failed": 0,
+      "includes": "Both adjusted tests and all seven new integration tests."
+    }
+  ],
+  "original_generator_tests_reexecuted": false,
+  "original_generator_engine_change": "catalog path only",
+  "catalog_identical_to_upload": true,
+  "streamlit_deployment_tested": false,
+  "final_design_approved": false
+}

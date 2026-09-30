@@ -71,6 +71,8 @@ design_basis_ui.show_demands(r)
 '''
         at=AppTest.from_string(script,default_timeout=30).run()
         self.assertFalse(at.exception)
+        at.radio(key='basis_mode').set_value('Manual avançado').run()
+        self.assertFalse(at.exception)
         self.assertTrue(any('33 campos pendentes' in x.value for x in at.info))
         at.selectbox(key='demand_member').set_value(at.selectbox(key='demand_member').options[-1]).run()
         self.assertFalse(at.exception)

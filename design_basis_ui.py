@@ -3,10 +3,18 @@ import pandas as pd
 import streamlit as st
 import design_basis
 import grid_names
+import automatic_basis
 
 
 def show(p, profiles, gid):
-    with st.expander('Materiais e travamentos — preparação do dimensionamento'):
+    with st.expander('Materiais e comprimentos da concepção'):
+        mode=st.radio('Dados para dimensionamento',['Automáticos pela concepção','Manual avançado'],key='basis_mode')
+        if mode=='Automáticos pela concepção':
+            result=automatic_basis.make(p,profiles,gid)
+            st.caption('W/HP deste catálogo: ASTM A572 Grau 50 · fy 345 MPa · fu 450 MPa · G 77000 MPa. Não se aplicam automaticamente a U laminados ou Ue.')
+            st.dataframe(pd.DataFrame(result['groups']).drop(columns=['basis']),hide_index=True)
+            st.caption('Comprimentos preliminares por hipótese: colunas 2H como referência de balanço; vigas com vão integral, sem crédito a travamentos intermediários. Não são comprimentos críticos obtidos de análise de flambagem. Os vínculos e contenções ainda precisam ser validados no modelo completo.')
+            return result
         st.write('Registre os dados por grupo para a hipótese detalhada. fy, G, comprimentos efetivos, Lb e Cb alimentam as verificações condicionais. fu permanece registrado para futura verificação de seção líquida. Não alteram esforços ou ranking. Zero significa dado não preenchido.')
         st.caption(f'E usado na análise: {p["E_mpa"]:g} MPa. Perfis: '+ ' · '.join(f'{design_basis.ROLES[k]}: {v}' for k,v in profiles.items()))
         st.markdown('**Comprimentos em metros:** Lef_x e Lef_y são comprimentos efetivos de flambagem nos eixos locais forte e fraco; Lef_t é o comprimento efetivo para flambagem por torção. Não são necessariamente iguais ao comprimento geométrico da barra.')

@@ -79,7 +79,7 @@ def evaluate(elu,basis,conditions):
         for i,piece in enumerate(case['result']['force_diagrams']):members.setdefault(piece['member'],[]).append((i,piece))
         for member,pieces in members.items():
             role=design_basis.COMPONENTS[pieces[0][1]['component']];g=groups[role];p=basis['section_properties'][role];E=basis['E_MPa']
-            entry=dict(member=member,role=role,combination=case['combination']['id'],profile=p['Perfil'],pending=[],final_design_approved=False)
+            entry=dict(member=member,role=role,combination=case['combination']['id'],profile=p['Perfil'],pending=(['Comprimentos automáticos preliminares: validar vínculos e flambagem da concepção.'] if basis.get('automatic_policy') else []),final_design_approved=False)
             try:
                 positive(fy=g['fy_MPa'])
                 if not g['basis'].strip():raise ValueError('Justificativa de materiais e travamentos pendente.')
@@ -105,13 +105,13 @@ def evaluate(elu,basis,conditions):
                     entry['pending'].append('Lef/r > 200: revisão da recomendação de esbeltez e dos comprimentos geométricos necessária.')
                 entry.update(eta=eta,governing=worst,checks=governing,
                     capacities=dict(axial=ac,Nt_gross_N=nt,positive=mp,negative=mn,shear=vc),
-                    status='EXCEEDS_IMPLEMENTED_CHECKS' if eta>1 else 'PENDING' if entry['pending'] else 'WITHIN_CONDITIONAL_FIRST_ORDER_CHECKS')
+                    status='EXCEEDS_IMPLEMENTED_CHECKS' if eta>1 else 'PENDING' if entry['pending'] else 'WITHIN_IMPLEMENTED_CONDITIONAL_CHECKS')
             except (ValueError,KeyError,TypeError) as exc:
                 entry['pending'].append(str(exc));entry['status']='PENDING'
             rows.append(entry)
-    complete=all(r['status']=='WITHIN_CONDITIONAL_FIRST_ORDER_CHECKS' for r in rows) and bool(rows)
-    return dict(schema='M23-PY09-NMV-CONDITIONAL',rows=rows,within_implemented_checks=complete,
+    complete=all(r['status']=='WITHIN_IMPLEMENTED_CONDITIONAL_CHECKS' for r in rows) and bool(rows)
+    return dict(schema='M23-PY10-NMV-CONDITIONAL',analysis_schema=elu['schema'],analysis_options=elu.get('options'),rows=rows,within_implemented_checks=complete,
                 final_design_approved=False,elu_signature=elu['signature'],basis=basis,conditions=conditions,
-                global_pending=['Second-order and imperfections','Y-direction analysis/stability','Actual restraint validation',
+                global_pending=[('Second-order and imperfections' if 'SECOND-ORDER' not in elu['schema'] else 'Normative applicability of second-order model and local imperfections'),'Y-direction analysis/stability','Actual restraint validation',
                     'Torsion/warping and local concentrated forces','Normative load combination validation',
                     'Complete steel mass including bracing/collectors'])

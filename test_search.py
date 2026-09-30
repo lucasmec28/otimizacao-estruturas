@@ -41,7 +41,7 @@ class SearchTests(unittest.TestCase):
         at.multiselect(key='candidates_secondary').set_value(self.c['secondary']).run()
         at.button(key='search').click().run()
         self.assertFalse(at.exception)
-        self.assertEqual(at.session_state['search_result']['cases'],36)
+        self.assertEqual(at.session_state['search_result']['cases'],72)
         at.number_input(key='q_floor_kpa').set_value(2.0).run()
         self.assertFalse(at.exception)
         self.assertTrue(any('Dados da busca alterados' in w.value for w in at.warning))

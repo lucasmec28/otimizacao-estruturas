@@ -6,7 +6,7 @@ import flexure_check,grid_names
 
 def show(elu,basis):
     st.subheader('Flexão forte W/HP — comparação isolada e condicional')
-    st.caption('FLT, FLM e FLA pela NBR 8800, Anexo D. γa1 = 1,10. Não verifica interação com N ou V, segunda ordem ou estabilidade global. Não altera o ranking ELS. Nesta integração por grupo, Cb deve ser 1; não há geração automática de trechos contidos.')
+    st.caption('FLT, FLM e FLA pela NBR 8800, Anexo D. γa1 = 1,10. Este quadro verifica apenas flexão isolada; o bloco N–M–V usa os esforços do modelo ELU selecionado. Estabilidade global permanece condicional. Não altera o ranking ELS. Nesta integração por grupo, Cb deve ser 1; não há geração automática de trechos contidos.')
     if basis is None:
         st.info('Corrija os dados do painel de materiais e travamentos.');return
     mid=st.checkbox('Para este estudo, as cargas transversais atuam na semialtura da seção, conforme a hipótese de FLT usada.',key='flexure_midheight')

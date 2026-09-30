@@ -41,6 +41,7 @@ class UltimateTests(unittest.TestCase):
 
     def test_ui_requires_explicit_input(self):
         at=AppTest.from_file(str(service.ROOT/'app.py'),default_timeout=45).run()
+        at.radio(key='combo_mode').set_value('Manual avançada').run()
         at.button(key='calculate').click().run();self.assertFalse(at.exception)
         self.assertTrue(at.button(key='elu_run').disabled)
         at.checkbox(key='elu_confirm').check().run()

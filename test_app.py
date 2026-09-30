@@ -16,7 +16,7 @@ class ApplicationTests(unittest.TestCase):
         self.assertFalse(at.exception)
         self.assertEqual(len(at.metric),3)
         self.assertEqual(at.metric[0].value,'18')
-        self.assertEqual(at.metric[2].value,'54')
+        self.assertEqual(at.metric[2].value,'108')
         at.number_input(key='q_floor_kpa').set_value(2.0).run()
         self.assertFalse(at.exception)
         self.assertFalse(at.metric)

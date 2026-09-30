@@ -1,30 +1,27 @@
-# Otimização de estruturas metálicas — M23-PY-09
+# Otimização de estruturas metálicas — M23-PY-11
 
-Aplicação Python/Streamlit para mezaninos com perfis W/HP. Esta versão inclui todas as entregas anteriores. Consulte ATUALIZACAO_PY09.md para escopo técnico e validação. Os documentos PY01...PY08 são históricos.
+Aplicativo Streamlit para estudo de mezaninos W/HP. Inclui o gerador de combinações enviado pelo usuário, adaptado aos canais de ações do modelo. ELU normal e ELS frequente são selecionadas inicialmente. ELS rara e quase permanente são opcionais; o modo manual continua disponível.
 
-## Atualização do app existente
+## Atualizar e testar
 
-Extraia o ZIP. Envie o CONTEÚDO de M23_PY09 para a raiz do repositório, onde app.py já está. Mantenha a pasta engine e substitua os arquivos homônimos. Não crie uma pasta M23_PY09 dentro do repositório. Nenhuma instalação é necessária no computador que acessa o site.
+1. Extraia o ZIP e envie o CONTEÚDO de M23_PY11 à raiz do repositório, onde já existe app.py. Substitua arquivos homônimos e preserve as pastas. Não envie o ZIP nem crie outra pasta em volta do aplicativo.
+2. Após a atualização do Streamlit, confira M23-PY-11 na tela.
+3. Confira a geometria, as ações características, a natureza da carga permanente do piso e o uso do piso para os fatores ψ. Os valores iniciais são demonstrativos; não se deduz a categoria de uso apenas da magnitude da sobrecarga.
+4. Mantenha Automática / ELU normal + ELS frequente, ou selecione as outras famílias desejadas. Se Hx for diferente de zero, indique se representa vento. Outros tipos horizontais exigem o modo manual avançado. Hx permanece a força TOTAL distribuída igualmente entre todos os topos.
+5. Confira a tabela de coeficientes. Calcule hipóteses, escolha uma para detalhar e abra o painel ELU. As combinações já estão preenchidas pelo gerador. Confira o modelo de primeira/segunda ordem antes de executar.
+6. Materiais W/HP já são preenchidos. Os comprimentos automáticos são PRELIMINARES e mudam com a geometria; ainda não constituem determinação dos comprimentos críticos pela estabilidade do conjunto.
+7. Para buscar perfis, selecione candidatos e hipóteses. O limite conjunto continua 200 casos, contando ELS e ELU (e os dois sentidos nocionais na segunda ordem). O app não descarta combinações para caber no limite. Com vento, poderá ser necessário reduzir as hipóteses por execução.
+8. Baixe os registros JSON de combinações, ELS, ELU e busca para conferência. Não há reabertura de projetos pela interface nem salvamento automático de sessões.
 
-Esta versão foi testada em Python 3.12.14. O assistente não publicou o pacote no GitHub/Streamlit. O usuário confirmou a execução da PY08; a PY09 ainda precisa de teste na hospedagem.
+O pacote não foi publicado no GitHub ou Streamlit pelo assistente. Nenhuma instalação é necessária no computador usado para acessar o site.
 
-## Como testar a nova busca
+## Limites de interpretação
 
-1. Informe geometria, ações e combinações ELS. Na busca ELS, escolha os candidatos de colunas, principais e secundárias.
-2. Calcule com perfis fixos e escolha uma hipótese para detalhar.
-3. Em Materiais e travamentos, informe fy, G, comprimentos efetivos forte/fraco/torção, Lb por sinal, Cb=1 e justificativa por grupo. Os campos começam zerados; não são valores recomendados. fu está reservado para futura seção líquida.
-4. Informe combinações ELU no painel próprio e calcule os esforços ELU.
-5. Defina as condições de altura da carga e contenções apenas se forem coerentes com o modelo real. Consulte as verificações conjuntas N–M e cisalhamento.
-6. Abra Busca conjunta de perfis — ELS + N–M–V condicional. Confirme que os comprimentos e materiais por grupo se aplicam a todas as hipóteses selecionadas. Execute a busca. O total considera ELS e ELU, com limite de 200 casos, sem truncamento.
-7. Baixe busca_conjunta_py09.json para conferência. Para um cálculo fixo, baixe verificacoes_nmv_py09.json. calculo_m23.json continua sendo o registro ELS; não contém as verificações resistentes.
+A estabilidade Y, as contenções reais e a determinação dos comprimentos efetivos continuam pendentes. Por isso, o modo de comprimentos automáticos mantém as verificações resistentes como preliminares e não produz uma alternativa aprovada na busca condicional. Os valores calculados servem para inspecionar o estudo. Não basta um índice menor que 1 para remover essa pendência.
 
-## Interpretação
+O peso ainda é subtotal de colunas e vigas; não inclui contraventamentos, coletores ou ligações. O gerador aplica fatores às ações existentes: não calcula o vento característico nem cria ações que o modelo não tem. Sobrecarga alternada por vãos, temperatura, sismo, situações especiais, construção e excepcionais não foram integrados ao modelo automático nesta etapa.
 
-Dentro dos critérios condicionais significa atendimento apenas às verificações implementadas e às hipóteses declaradas. Segunda ordem, imperfeições, estabilidade Y, contenções reais e efeitos locais ainda precisam ser tratados. Tração tem escoamento bruto calculado, mas ruptura da seção líquida fica pendente. Nenhum resultado é aprovação estrutural final.
-
-Os kg/m² ainda incluem apenas colunas e vigas principais/secundárias. Contraventamentos e coletores não estão incluídos. A busca retorna o menor subtotal no conjunto testado e no escopo condicional, não o menor peso final da estrutura.
-
-Não há salvamento automático de projetos nem reimportação de sessões. Baixe os registros antes de encerrar ou reiniciar a sessão.
+Detalhes e validação em ATUALIZACAO_PY11.md. Documentos PY01–PY10 são históricos.
 
 ## Desenvolvimento local
 

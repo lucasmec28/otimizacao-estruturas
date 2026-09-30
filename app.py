@@ -10,6 +10,7 @@ import search_profiles
 import diagnostics
 import grid_names
 import ultimate_ui
+import combinations_ui
 import combined_search_ui
 import design_basis_ui
 
@@ -73,8 +74,8 @@ def show_plan(p, g):
 
 st.set_page_config(page_title='LRO | Otimização estrutural', page_icon='🏗️', layout='wide')
 st.title('Otimização de estruturas metálicas')
-st.caption('M23-PY-09 · Mezanino · Análises ELS e ELU separadas')
-st.warning('Mezanino em primeira ordem: ELS e verificações ELU condicionais de N–M e cisalhamento. Busca conjunta disponível. Segunda ordem, imperfeições e estabilidade global/Y ainda pendentes; não há aprovação estrutural final.')
+st.caption('M23-PY-11 · Mezanino · Análises ELS e ELU separadas')
+st.warning('Mezanino com opção de segunda ordem X: ELS e verificações ELU condicionais de N–M e cisalhamento. Busca conjunta disponível. Aplicabilidade normativa, imperfeições locais e estabilidade global/Y ainda pendentes; não há aprovação estrutural final.')
 
 p0, s0 = service.defaults()
 p = {}
@@ -108,10 +109,13 @@ with st.expander('Ações, perfis e limites', expanded=True):
     for col,k,label in [(a,'column_limit','Colunas: H /'),(b,'primary_limit','Principais: L /'),(c,'secondary_limit','Secundárias: L /')]:
         p[k]=col.number_input(label,min_value=1.0,value=p0[k],key=k)
     st.caption('Bases engastadas; nós viga–coluna rígidos no plano X; secundárias biapoiadas. Deslocamento vertical absoluto inclui o movimento dos apoios.')
-    combos=st.data_editor(pd.DataFrame([dict(id='DEMO_G_Q',family='ELS_RARA',G_STEEL=1.0,G_FLOOR=1.0,Q=1.0,HX=1.0)]),
-        num_rows='dynamic',hide_index=True,key='combinations',
-        column_config={'family':st.column_config.SelectboxColumn('Família ELS',options=list(service.engine.FAMILIES),required=True)})
-    st.caption('Coeficientes explícitos definidos pelo usuário. DEMO_G_Q é uma combinação de teste; não há geração automática de combinações normativas.')
+    generated=combinations_ui.show(p)
+    if generated is not None:
+        if generated.get('error'):st.stop()
+        combos=pd.DataFrame(generated['els'])
+    else:
+        combos=st.data_editor(pd.DataFrame([dict(id='DEMO_G_Q',family='ELS_FREQUENTE',G_STEEL=1.,G_FLOOR=1.,Q=1.,HX=1.)]),num_rows='dynamic',hide_index=True,key='combinations',column_config={'family':st.column_config.SelectboxColumn('Família ELS',options=list(service.engine.FAMILIES),required=True)})
+        st.caption('Modo manual: coeficientes definidos pelo calculista; valores iniciais demonstrativos.')
 
 try:
     geometries=service.grid(p)
@@ -171,6 +175,7 @@ with st.expander('Buscar perfis mais leves — ELS parcial',expanded=False):
     if sr and sr['signature']!=search_sig:
         st.warning('Dados da busca alterados. Execute novamente para atualizar as alternativas.')
     elif sr:
+        sr['combination_provenance']=generated
         summaries=pd.DataFrame(sr['summaries'])
         feasible=summaries[summaries.passes_partial_els]
         if feasible.empty:
@@ -215,6 +220,7 @@ if r['request_sha256']!=service.fingerprint(text):
     st.warning('Entradas alteradas. Calcule novamente para visualizar resultados correspondentes aos dados atuais.')
     st.stop()
 
+r['combination_provenance']=generated
 df=pd.DataFrame(r['rows'])
 ranking=df.groupby('id',as_index=False).agg(subtotal_kg=('subtotal_kg','first'),kg_m2=('kg_m2','first'),eta=('eta','max')).sort_values(['kg_m2','id'])
 ranking['Situação ELS parcial']=ranking.eta.map(lambda x:'Atende ao escopo parcial' if x<=1 else 'Não atende')
@@ -230,7 +236,7 @@ chosen=st.selectbox('Detalhar hipótese',ranking.id.tolist())
 show_plan(p,next(g for g in geometries if g['id']==chosen))
 diagnostics.show([case for case in r['full'] if case['hypothesis_id']==chosen],'manual_diag_'+str(chosen))
 basis=design_basis_ui.show(p,profiles,int(chosen))
-elu_current=ultimate_ui.show(p,profiles,int(chosen),basis)
+elu_current=ultimate_ui.show(p,profiles,int(chosen),basis,generated)
 combined_search_ui.show(p,candidates,combos.to_dict("records"),selected,basis,elu_current)
 detail=df[df.id==chosen].copy()
 detail['Utilização (%)']=detail.eta*100
@@ -240,5 +246,5 @@ st.caption('Sinal dos deslocamentos conforme eixos do motor. A utilização cons
 with st.expander('Detalhamento e rastreabilidade'):
     st.json({'versão_do_app':r.get('application_version'),'esquema_do_arquivo':r['schema'],'motor':r['engine_id'],'entrada':r['request_sha256'],'erro_relativo_equilibrio_maximo':float(df.balance.max()),'aprovação_estrutural_final':False})
     st.json([x for x in r['full'] if x['hypothesis_id']==chosen],expanded=False)
-st.download_button('Baixar registro completo do cálculo',json.dumps(r,ensure_ascii=False,indent=2,allow_nan=False),file_name='calculo_m23.json',mime='application/json')
+st.download_button('Baixar cálculo ELS — não inclui verificações ELU',json.dumps(r,ensure_ascii=False,indent=2,allow_nan=False),file_name='calculo_m23.json',mime='application/json')
 st.caption('Excel e PNG serão adicionados após consolidarmos a apresentação dos resultados. O registro JSON preserva entradas e saídas; esta versão não reabre projetos pela interface.')

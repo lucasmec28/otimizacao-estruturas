@@ -6,27 +6,51 @@ import ultimate,diagnostics,grid_names
 import design_basis_ui
 import flexure_ui
 import member_strength_ui
+import second_order
 
 
-def show(p,profiles,gid,basis=None):
+def show(p,profiles,gid,basis=None,generated=None):
     with st.expander('Análise preparatória ELU — perfis fixos da hipótese detalhada',expanded=False):
-        st.warning('Somente esforços de primeira ordem em X–Z, com E integral e coeficientes manuais. Sem verificação resistente, imperfeições ou efeitos de segunda ordem. Este painel não aprova perfis e não altera o ranking ELS.')
+        st.warning('Análise X–Z e verificações condicionais. Combinações selecionadas acima; sem aprovação estrutural final. A segunda ordem exige convergência de malha; estabilidade Y permanece pendente.')
+        mode=st.selectbox('Modelo de análise ELU',['Primeira ordem','Segunda ordem X com forças nocionais'],key='elu_order')
+        options=None
+        if mode.startswith('Segunda'):
+            options=dict(second_order.DEFAULTS)
+            a,b=st.columns(2)
+            options['reduction']=a.number_input('Fator de rigidez EA/EI em ELU',min_value=.1,max_value=1.,value=.8,step=.05,key='so_reduction')
+            options['notional_ratio']=b.number_input('Fração nocional da carga gravitacional',min_value=0.,max_value=.01,value=.003,step=.001,format='%.4f',key='so_notional')
+            st.caption('Calcula os dois sentidos nocionais, somados às forças horizontais informadas. 0,003 corresponde a 0,3%. Distribuição pela reação gravitacional de cada coluna, incluindo peso próprio. EA/EI reduzidos somente na análise ELU. A seleção não certifica a aplicabilidade normativa ao projeto.')
+            st.caption('Malha adaptativa: 4 → 8 → até 16 divisões por coluna; convergência de momentos e deslocamentos em 1%. Formulação de eixos iniciais e pequenas rotações; não é análise corrotacional.')
         st.write(f'Geometria: **{gid}** · Colunas: **{profiles["column"]}** · Principais: **{profiles["primary"]}** · Secundárias: **{profiles["secondary"]}**')
-        st.caption('Defina abaixo as combinações ELU. Os zeros iniciais são campos a preencher, não uma combinação de projeto. Ações características são as informadas acima; Hx segue a distribuição uniforme por todos os topos.')
-        rows=st.data_editor(pd.DataFrame([dict(id='ELU_01',G_STEEL=0.,G_FLOOR=0.,Q=0.,HX=0.)]),num_rows='dynamic',hide_index=True,key='elu_combinations')
-        confirmed=st.checkbox('Defini os coeficientes ELU para este estudo; compreendo o escopo de primeira ordem.',key='elu_confirm')
-        try:current=ultimate.signature(p,profiles,gid,rows.to_dict('records'))
+        st.caption('Confira as combinações ELU. No modo manual, preencha os coeficientes inicialmente zerados. Ações características são as informadas acima; Hx segue a distribuição uniforme por todos os topos.')
+        if generated is not None:
+            if not generated['elu']:
+                st.info('Selecione ELU normal no painel de famílias para executar esta análise.');return
+            rows=pd.DataFrame(generated['elu'])
+            st.caption('Coeficientes recebidos automaticamente do gerador de combinações.')
+        else:
+            rows=st.data_editor(pd.DataFrame([dict(id='ELU_01',G_STEEL=0.,G_FLOOR=0.,Q=0.,HX=0.)]),num_rows='dynamic',hide_index=True,key='elu_combinations')
+        confirmed=st.checkbox('Conferi as combinações ELU e compreendo o modelo selecionado e suas limitações.',key='elu_confirm')
+        try:current=ultimate.signature(p,profiles,gid,rows.to_dict('records')) if options is None else second_order.signature(p,profiles,gid,rows.to_dict('records'),options)
         except (ValueError,TypeError):
             st.error('Complete a tabela de coeficientes.');return
         if st.button('Calcular esforços ELU',disabled=not confirmed,key='elu_run'):
             st.session_state.pop('elu_result',None)
             try:
-                with st.spinner('Calculando ações ELU…'):st.session_state.elu_result=ultimate.calculate(p,profiles,gid,rows.to_dict('records'))
+                with st.spinner('Calculando ações ELU e convergência…'):st.session_state.elu_result=ultimate.calculate(p,profiles,gid,rows.to_dict('records')) if options is None else second_order.calculate(p,profiles,gid,rows.to_dict('records'),options)
             except Exception as exc:st.error(f'Análise ELU interrompida: {exc}')
         result=st.session_state.get('elu_result')
         if not result:return
         if not confirmed or result['signature']!=current:
             st.warning('Entradas ELU ou hipótese alteradas. Calcule novamente.');return
+        result['combination_provenance']=generated
+        if generated is not None:
+            for case in result['full']:case['combination']['family']='ELUN'
+        if result.get('diagnostics'):
+            st.subheader('Segunda ordem X — diagnóstico de convergência')
+            st.dataframe(pd.DataFrame([dict(Combinação=d['combination'],Malha=d['mesh'],Iterações=d['iterations'],Resíduo=d['relative_residual'],Erro_momentos=d['mesh_history'][-1]['moment_error'],Erro_deslocamentos=d['mesh_history'][-1]['drift_error']) for d in result['diagnostics']]),hide_index=True)
+            st.dataframe(pd.DataFrame([dict(Combinação=d['combination'],Coluna=grid_names.member(x['member']),Deslocamento_1a_mm=x['first_mm'],Deslocamento_2a_mm=x['second_mm'],Amplificação=x['amplification']) for d in result['diagnostics'] for x in d['drifts']]),hide_index=True)
+            st.caption('As duas ordens usam a mesma rigidez reduzida e o mesmo carregamento, incluindo nocionais. A razão de deslocamentos é diagnóstico local, não classificação normativa automática. Reações exportadas incluem forças nocionais; não são quadro final de fundações.')
         design_basis_ui.show_demands(result)
         flexure_ui.show(result,basis)
         member_strength_ui.show(result,basis,dict(midheight_loads=st.session_state.get("flexure_midheight",False),effective_restraints=st.session_state.get("flexure_restraints",False)))
@@ -40,7 +64,7 @@ def show(p,profiles,gid,basis=None):
         unit='kN·m' if quantity=='M' else 'kN'
         chart=alt.Chart(values).mark_line().encode(x=alt.X('Posição (m):Q',axis=alt.Axis(tickCount=7)),y=alt.Y('Valor:Q',title=f'{quantity} ({unit})'),detail='Trecho:N',order='Posição (m):Q',tooltip=['Posição (m):Q','Valor:Q'])
         st.altair_chart(chart,width='stretch')
-        st.caption('N positivo em tração; M = EI·v″ e V = dM/ds. Mesma convenção local dos diagramas ELS. Nas secundárias, N = 0 por hipótese do modelo de flexão biapoiada.')
-        st.download_button('Baixar análise ELU preliminar',json.dumps(result,ensure_ascii=False,indent=2,allow_nan=False),file_name='analise_elu_py06.json',mime='application/json')
+        st.caption('N positivo em tração. Na segunda ordem, M é recuperado por equilíbrio com o termo P–δ, e V = dM/ds; não se reutiliza a parábola de primeira ordem. Nas secundárias, N = 0 por hipótese de flexão biapoiada.')
+        st.download_button('Baixar análise ELU preliminar',json.dumps(result,ensure_ascii=False,indent=2,allow_nan=False),file_name='analise_elu_py11.json',mime='application/json')
 
         return result
