@@ -67,6 +67,6 @@ def calculate(text):
     rows, full = engine.solve(text)
     if any(not 0 <= r[10] <= 1e-8 for r in rows):
         raise ValueError('Falha no equilíbrio de forças. Resultados não liberados.')
-    return dict(schema='M23-PY-01', engine_id=engine.engine_id(), request_sha256=fingerprint(text),
+    return dict(schema='M23-PY-04', engine_id=engine.engine_id(), request_sha256=fingerprint(text),
                 final_design_approved=False, rows=[dict(zip(engine.COLUMNS, r)) for r in rows],
                 full=full, request=text)

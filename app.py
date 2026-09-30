@@ -7,6 +7,7 @@ import pandas as pd
 import streamlit as st
 import service
 import search_profiles
+import diagnostics
 
 
 def plan_svg(p, g):
@@ -66,7 +67,7 @@ def show_plan(p, g):
 
 st.set_page_config(page_title='LRO | Otimização estrutural', page_icon='🏗️', layout='wide')
 st.title('Otimização de estruturas metálicas')
-st.caption('M23-PY-03 · Mezanino · Busca de perfis com ELS parcial')
+st.caption('M23-PY-04 · Mezanino · Bases, reações e diagramas de deslocamento')
 st.warning('ELS parcial: análise elástica de primeira ordem dos pórticos X e vigas secundárias. Busca entre perfis candidatos disponível; sem ELU, estabilidade global ou análise lateral Y. Atender aqui não significa aprovação estrutural.')
 
 p0, s0 = service.defaults()
@@ -179,7 +180,17 @@ with st.expander('Buscar perfis mais leves — ELS parcial',expanded=False):
         st.write(f'Colunas: **{ss["column"]}** · Principais: **{ss["primary"]}** · Secundárias: **{ss["secondary"]}**')
         show_plan(p,next(g for g in geometries if g['id']==ss['hypothesis']))
         st.dataframe(pd.DataFrame(next(x for x in sr['details'] if x['solution']==solution)['rows']),hide_index=True)
-        st.download_button('Baixar registro da busca',json.dumps(sr,ensure_ascii=False,indent=2,allow_nan=False),file_name='busca_m23_py03.json',mime='application/json')
+        st.download_button('Baixar registro da busca',json.dumps(sr,ensure_ascii=False,indent=2,allow_nan=False),file_name='busca_m23_py04.json',mime='application/json')
+        diag_key=sr['signature']+str(solution)
+        if st.button('Calcular bases e diagramas desta solução',key='search_diagnostics'):
+            request=service.request(study,p,{k:ss[k] for k in search_profiles.ROLES},combos.to_dict('records'),[ss['hypothesis']])
+            try:st.session_state['search_diagnostics_result']=(diag_key,service.calculate(request))
+            except Exception as exc:
+                st.session_state.pop('search_diagnostics_result',None)
+                st.error(f'Diagnóstico interrompido: {exc}')
+        saved_diag=st.session_state.get('search_diagnostics_result')
+        if saved_diag and saved_diag[0]==diag_key:
+            diagnostics.show(saved_diag[1]['full'],'search_diag_'+str(solution))
 
 st.subheader('Calcular com os perfis fixos informados')
 if st.button('Calcular hipóteses',type='primary',key='calculate'):
@@ -211,6 +222,7 @@ st.dataframe(ranking.rename(columns={'id':'Hipótese','subtotal_kg':'Subtotal (k
 st.bar_chart(ranking.set_index('id')[['kg_m2']],x_label='Hipótese',y_label='Subtotal de aço (kg/m²)')
 chosen=st.selectbox('Detalhar hipótese',ranking.id.tolist())
 show_plan(p,next(g for g in geometries if g['id']==chosen))
+diagnostics.show([case for case in r['full'] if case['hypothesis_id']==chosen],'manual_diag_'+str(chosen))
 detail=df[df.id==chosen].copy()
 detail['Utilização (%)']=detail.eta*100
 detail['Situação']=detail.eta.map(lambda x:'Atende ao ELS parcial' if x<=1 else 'Não atende')
