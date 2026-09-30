@@ -81,7 +81,7 @@ def analyze(g,column,primary,secondary,g_floor_kpa,q_floor_kpa,factors,
     steel=factors['G_STEEL'];gf=factors['G_FLOOR'];qf=factors['Q'];sy=g.ly/g.ny
     # kPa * tributary width(m) = kN/m = N/mm. Secondary self-weight is separate.
     qlines=(gf*g_floor_kpa+qf*q_floor_kpa)*g.widths/1000+steel*secondary.kg_m*GRAVITY/1000
-    frames=[];solutions=[];tops=[];primary_checks=[];column_checks=[];bases=[];curves=[]
+    frames=[];solutions=[];tops=[];primary_checks=[];column_checks=[];bases=[];curves=[];force_diagrams=[]
     for j in range(g.ny+1):
         f=Frame(E);rowtops=[];columns=[]
         for x in g.secondary_x:rowtops.append(f.node(float(x),g.height))
@@ -120,6 +120,15 @@ def analyze(g,column,primary,secondary,g_floor_kpa,q_floor_kpa,factors,
                     target.extend(dict(x_mm=f.nodes[a][0]+t*(f.nodes[b][0]-f.nodes[a][0]),signed_displacement_mm=v) for t,v in extrema(poly))
             worst=max(absolute,key=lambda x:abs(x['signed_displacement_mm']));rel=max(relative,key=lambda x:abs(x['signed_displacement_mm']))
             primary_checks.append(dict(frame=j+1,bay=bay+1,reference='INITIAL_GLOBAL_VERTICAL',relative_to_chord=rel,**worst,**check(worst['signed_displacement_mm'],span,primary_denominator)))
+        for idx,(a,b,A,I,q,tag) in enumerate(f.members):
+            e=r['elements'][idx];L=e['L'];F=e['material_end_forces'];k=int(tag.split('_')[1])
+            is_column=tag.startswith('column_');span=g.height if is_column else g.lx/g.nx
+            start=0. if is_column else f.nodes[a][0]-k*span
+            force_diagrams.append(dict(member=f'C-{j+1:02d}-{k+1:02d}' if is_column else f'VP-{j+1:02d}-{k+1:02d}',
+                component='COLUNA_X' if is_column else 'PRINCIPAL',start_mm=start,end_mm=start+L,
+                N_coefficients=[float(-F[0]),float(-e['qx']*L)],
+                V_coefficients=[float(F[1]),float(e['qy']*L)],
+                M_coefficients=[float(-F[2]),float(F[1]*L),float(e['qy']*L**2/2)]))
     secondary_checks=[]
     t=P([0,1])
     for j in range(g.ny):
@@ -128,6 +137,8 @@ def analyze(g,column,primary,secondary,g_floor_kpa,q_floor_kpa,factors,
             # Exact pinned UDL deflection + displacements of both supporting primaries.
             relative=-q*sy**4/(24*E*secondary.strong_inertia_mm4)*(t-2*t**3+t**4)
             absolute=P([za,zb-za])+relative
+            force_diagrams.append(dict(member=f'VS-{j+1:02d}-{k+1:02d}',component='SECUNDARIA',start_mm=0.,end_mm=sy,
+                N_coefficients=[0.],V_coefficients=[q*sy/2,-q*sy],M_coefficients=[0.,q*sy**2/2,-q*sy**2/2]))
             curves.append(dict(member=f'VS-{j+1:02d}-{k+1:02d}',component='SECUNDARIA',frame=None,
                 start_mm=0.,end_mm=sy,absolute_coefficients=absolute.coef.tolist(),relative_coefficients=relative.coef.tolist(),
                 ordinate='deslocamento vertical Z',abscissa='posição no vão Y',limit_mm=sy/secondary_denominator))
@@ -143,4 +154,4 @@ def analyze(g,column,primary,secondary,g_floor_kpa,q_floor_kpa,factors,
     applied_moment=-weight*g.lx/2-horizontal*g.height
     moment_balance=abs(moment+applied_moment)/max(1.,abs(weight*g.lx/2)+abs(horizontal*g.height))
     if moment_balance>1e-8:raise ValueError('GLOBAL_MOMENT_BALANCE_FAILED')
-    return dict(base_reactions=bases,displacement_curves=curves,moment_balance=moment_balance,status='PARTIAL_MEZZANINE_FIRST_ORDER_SERVICE',final_design_approved=False,geometry=g.__dict__,sections=dict(column=column.__dict__,primary=primary.__dict__,secondary=secondary.__dict__),actions=dict(g_floor_kpa=g_floor_kpa,q_floor_kpa=q_floor_kpa,factors=factors,lateral_x_kn=None if lateral is None else lateral.tolist()),limits=dict(column=column_denominator,primary=primary_denominator,secondary=secondary_denominator),primary_checks=primary_checks,secondary_checks=secondary_checks,column_checks=column_checks,mass_subtotal_kg=mass,subtotal_kg_m2=sum(mass.values())/(g.lx*g.ly/1e6),mass_status='EXCLUDES_HORIZONTAL_AND_VERTICAL_BRACING_AND_INTERMEDIATE_COLLECTORS',force_balance=balance,applied_vertical_N=weight,reactions_XZ_N=reactions.tolist(),tributary_area_m2=float(sum(g.widths)*g.ly/1e6),pending=['ELU resistance and stability','Horizontal diaphragm and actual beam restraints','Y global stability and column displacement','Bracing and collector mass','Project actions and service combination selection','Independent rolled U benchmark'])
+    return dict(force_diagrams=force_diagrams,base_reactions=bases,displacement_curves=curves,moment_balance=moment_balance,status='PARTIAL_MEZZANINE_FIRST_ORDER_SERVICE',final_design_approved=False,geometry=g.__dict__,sections=dict(column=column.__dict__,primary=primary.__dict__,secondary=secondary.__dict__),actions=dict(g_floor_kpa=g_floor_kpa,q_floor_kpa=q_floor_kpa,factors=factors,lateral_x_kn=None if lateral is None else lateral.tolist()),limits=dict(column=column_denominator,primary=primary_denominator,secondary=secondary_denominator),primary_checks=primary_checks,secondary_checks=secondary_checks,column_checks=column_checks,mass_subtotal_kg=mass,subtotal_kg_m2=sum(mass.values())/(g.lx*g.ly/1e6),mass_status='EXCLUDES_HORIZONTAL_AND_VERTICAL_BRACING_AND_INTERMEDIATE_COLLECTORS',force_balance=balance,applied_vertical_N=weight,reactions_XZ_N=reactions.tolist(),tributary_area_m2=float(sum(g.widths)*g.ly/1e6),pending=['ELU resistance and stability','Horizontal diaphragm and actual beam restraints','Y global stability and column displacement','Bracing and collector mass','Project actions and service combination selection','Independent rolled U benchmark'])

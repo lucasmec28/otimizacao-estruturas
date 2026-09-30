@@ -9,7 +9,7 @@ MAX_CASES=200
 
 def signature(study,p,candidates,combinations,selected):
     data=dict(study=study,parameters=p,candidates=candidates,combinations=combinations,
-              selected=sorted(selected),engine_id=service.engine.engine_id(),version='M23-PY-04')
+              selected=sorted(selected),engine_id=service.engine.engine_id(),version='M23-PY-05')
     return service.fingerprint(json.dumps(data,sort_keys=True,ensure_ascii=False,allow_nan=False))
 
 
@@ -47,7 +47,7 @@ def run(study,p,candidates,combinations,selected,progress=None):
         if progress:progress(index,len(sets))
     summaries.sort(key=lambda r:(r['kg_m2'],r['solution']))
     feasible=[r for r in summaries if r['passes_partial_els']]
-    return dict(schema='M23-PY-04-PARTIAL-SEARCH',
+    return dict(schema='M23-PY-05-PARTIAL-SEARCH',
         signature=signature(study,p,candidates,combinations,selected),
         engine_id=service.engine.engine_id(),cases=count,profile_sets=len(sets),
         all_requested_cases_completed=True,final_design_approved=False,

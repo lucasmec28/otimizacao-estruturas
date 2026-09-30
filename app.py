@@ -8,6 +8,7 @@ import streamlit as st
 import service
 import search_profiles
 import diagnostics
+import grid_names
 
 
 def plan_svg(p, g):
@@ -31,9 +32,11 @@ def plan_svg(p, g):
     for j in range(ny+1):
         y=bottom-j*sy*scale
         line(x0,y,right,y,'#2856a6',5)
+        text(x0-28,y+5,grid_names.fila(j+1))
         for i in range(nx+1):
             x=x0+i*sx*scale
             parts.append(f'<rect x="{x-4}" y="{y-4}" width="8" height="8" fill="#17324d"/>')
+    for i in range(nx+1):text(x0+i*sx*scale-4,top-16,str(i+1))
     line(x0,bottom+24,x0+es*scale,bottom+24,'#9333b8',3)
     for x in (x0,x0+es*scale):line(x,bottom+17,x,bottom+31,'#9333b8')
     text(x0,bottom+54,f'e = {es:.3f} m · medido em X','#9333b8')
@@ -67,7 +70,7 @@ def show_plan(p, g):
 
 st.set_page_config(page_title='LRO | Otimização estrutural', page_icon='🏗️', layout='wide')
 st.title('Otimização de estruturas metálicas')
-st.caption('M23-PY-04 · Mezanino · Bases, reações e diagramas de deslocamento')
+st.caption('M23-PY-05 · Mezanino · Filas/eixos e diagramas de esforços')
 st.warning('ELS parcial: análise elástica de primeira ordem dos pórticos X e vigas secundárias. Busca entre perfis candidatos disponível; sem ELU, estabilidade global ou análise lateral Y. Atender aqui não significa aprovação estrutural.')
 
 p0, s0 = service.defaults()
@@ -130,7 +133,7 @@ try:
         if ncols>1000:
             st.info('Tabela não exibida: mais de 1.000 nós. A fórmula de distribuição acima permanece válida.')
         else:
-            st.dataframe(pd.DataFrame([{'Nó de topo':f'T-{j+1:02d}-{i+1:02d}',
+            st.dataframe(pd.DataFrame([{'Nó de topo':f'T-{grid_names.base(j+1,i+1)}',
                 'X (m)':i*preview_g['x_spacing_mm']/1000,'Y (m)':j*preview_g['y_spacing_mm']/1000,
                 'Z (m)':p['height_mm']/1000,'Fx antes do coeficiente (kN)':p['hx_total_kn']/ncols}
                 for j in range(preview_g['ny']+1) for i in range(preview_g['nx']+1)]),hide_index=True)
@@ -180,7 +183,7 @@ with st.expander('Buscar perfis mais leves — ELS parcial',expanded=False):
         st.write(f'Colunas: **{ss["column"]}** · Principais: **{ss["primary"]}** · Secundárias: **{ss["secondary"]}**')
         show_plan(p,next(g for g in geometries if g['id']==ss['hypothesis']))
         st.dataframe(pd.DataFrame(next(x for x in sr['details'] if x['solution']==solution)['rows']),hide_index=True)
-        st.download_button('Baixar registro da busca',json.dumps(sr,ensure_ascii=False,indent=2,allow_nan=False),file_name='busca_m23_py04.json',mime='application/json')
+        st.download_button('Baixar registro da busca',json.dumps(sr,ensure_ascii=False,indent=2,allow_nan=False),file_name='busca_m23_py05.json',mime='application/json')
         diag_key=sr['signature']+str(solution)
         if st.button('Calcular bases e diagramas desta solução',key='search_diagnostics'):
             request=service.request(study,p,{k:ss[k] for k in search_profiles.ROLES},combos.to_dict('records'),[ss['hypothesis']])
