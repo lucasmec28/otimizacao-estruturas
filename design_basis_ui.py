@@ -7,7 +7,7 @@ import grid_names
 
 def show(p, profiles, gid):
     with st.expander('Materiais e travamentos — preparação do dimensionamento'):
-        st.write('Registre os dados por grupo para a hipótese detalhada. fy, Lb e Cb alimentam a comparação condicional de flexão; os demais dados ficam registrados para etapas futuras. Não alteram esforços ou ranking. Zero significa dado não preenchido.')
+        st.write('Registre os dados por grupo para a hipótese detalhada. fy, G, comprimentos efetivos, Lb e Cb alimentam as verificações condicionais. fu permanece registrado para futura verificação de seção líquida. Não alteram esforços ou ranking. Zero significa dado não preenchido.')
         st.caption(f'E usado na análise: {p["E_mpa"]:g} MPa. Perfis: '+ ' · '.join(f'{design_basis.ROLES[k]}: {v}' for k,v in profiles.items()))
         st.markdown('**Comprimentos em metros:** Lef_x e Lef_y são comprimentos efetivos de flambagem nos eixos locais forte e fraco; Lef_t é o comprimento efetivo para flambagem por torção. Não são necessariamente iguais ao comprimento geométrico da barra.')
         st.markdown('**Lb_positive / Lb_negative:** comprimentos sem contenção lateral eficaz para os trechos de momento positivo e negativo, respectivamente. Nas vigas horizontais, momento positivo comprime a mesa superior. Cb deve corresponder ao trecho considerado. A presença de uma secundária não preenche automaticamente estes campos.')

@@ -5,6 +5,7 @@ import altair as alt
 import ultimate,diagnostics,grid_names
 import design_basis_ui
 import flexure_ui
+import member_strength_ui
 
 
 def show(p,profiles,gid,basis=None):
@@ -28,6 +29,7 @@ def show(p,profiles,gid,basis=None):
             st.warning('Entradas ELU ou hipótese alteradas. Calcule novamente.');return
         design_basis_ui.show_demands(result)
         flexure_ui.show(result,basis)
+        member_strength_ui.show(result,basis,dict(midheight_loads=st.session_state.get("flexure_midheight",False),effective_restraints=st.session_state.get("flexure_restraints",False)))
         st.caption('Reações por combinação, preservando simultaneidade e sinais. Valores ainda não suficientes para dimensionamento de fundações ou bases.')
         st.dataframe(pd.DataFrame(diagnostics.reaction_table(result['full'])),hide_index=True)
         cid=st.selectbox('Combinação ELU do diagrama',[x['combination']['id'] for x in result['full']],key='elu_plot_comb')
@@ -40,3 +42,5 @@ def show(p,profiles,gid,basis=None):
         st.altair_chart(chart,width='stretch')
         st.caption('N positivo em tração; M = EI·v″ e V = dM/ds. Mesma convenção local dos diagramas ELS. Nas secundárias, N = 0 por hipótese do modelo de flexão biapoiada.')
         st.download_button('Baixar análise ELU preliminar',json.dumps(result,ensure_ascii=False,indent=2,allow_nan=False),file_name='analise_elu_py06.json',mime='application/json')
+
+        return result

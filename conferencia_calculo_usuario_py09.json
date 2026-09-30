@@ -1,0 +1,21 @@
+{
+  "source_name": "calculo_m23 (3).json",
+  "source_sha256": "8b26a99a4f2474d2ddfaf6cb8bfab22ce879dfb2a396da84a3db3da82c3551f4",
+  "rows_reproduced": 54,
+  "hypotheses": 18,
+  "max_absolute_eta_difference": 9.103828801926284e-15,
+  "max_relative_force_balance": 1.0799452705316364e-15,
+  "partial_els_feasible_hypotheses": [
+    12,
+    13,
+    14,
+    17,
+    18
+  ],
+  "lightest_partial_els": {
+    "hypothesis": 12,
+    "kg_m2": 19.94333333333333,
+    "eta": 0.7610407230142233
+  },
+  "elu_results_in_source": false
+}

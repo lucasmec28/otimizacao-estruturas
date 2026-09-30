@@ -10,6 +10,7 @@ import search_profiles
 import diagnostics
 import grid_names
 import ultimate_ui
+import combined_search_ui
 import design_basis_ui
 
 
@@ -72,8 +73,8 @@ def show_plan(p, g):
 
 st.set_page_config(page_title='LRO | Otimização estrutural', page_icon='🏗️', layout='wide')
 st.title('Otimização de estruturas metálicas')
-st.caption('M23-PY-08 · Mezanino · Análises ELS e ELU separadas')
-st.warning('ELS parcial: análise elástica de primeira ordem dos pórticos X e vigas secundárias. Busca entre perfis candidatos disponível; sem ELU, estabilidade global ou análise lateral Y. Atender aqui não significa aprovação estrutural.')
+st.caption('M23-PY-09 · Mezanino · Análises ELS e ELU separadas')
+st.warning('Mezanino em primeira ordem: ELS e verificações ELU condicionais de N–M e cisalhamento. Busca conjunta disponível. Segunda ordem, imperfeições e estabilidade global/Y ainda pendentes; não há aprovação estrutural final.')
 
 p0, s0 = service.defaults()
 p = {}
@@ -222,21 +223,22 @@ a.metric('Hipóteses calculadas',len(ranking))
 b.metric('Atendem ao ELS parcial',int((ranking.eta<=1).sum()))
 c.metric('Resultados de componentes',len(df))
 st.subheader('Comparação por subtotal de aço')
-st.caption('Inclui colunas e vigas principais/secundárias. Não inclui travamentos, contraventamentos ou ligações. Perfis fixos nesta versão; esta ordenação ainda não é uma otimização estrutural completa.')
+st.caption('Inclui colunas e vigas principais/secundárias. Não inclui travamentos, contraventamentos ou ligações. Esta tabela mantém os perfis fixos informados. Para variar perfis, use uma das buscas; nenhuma delas representa otimização estrutural final.')
 st.dataframe(ranking.rename(columns={'id':'Hipótese','subtotal_kg':'Subtotal (kg)','kg_m2':'Subtotal (kg/m²)','eta':'Maior utilização ELS'}),hide_index=True,width='stretch')
 st.bar_chart(ranking.set_index('id')[['kg_m2']],x_label='Hipótese',y_label='Subtotal de aço (kg/m²)')
 chosen=st.selectbox('Detalhar hipótese',ranking.id.tolist())
 show_plan(p,next(g for g in geometries if g['id']==chosen))
 diagnostics.show([case for case in r['full'] if case['hypothesis_id']==chosen],'manual_diag_'+str(chosen))
 basis=design_basis_ui.show(p,profiles,int(chosen))
-ultimate_ui.show(p,profiles,int(chosen),basis)
+elu_current=ultimate_ui.show(p,profiles,int(chosen),basis)
+combined_search_ui.show(p,candidates,combos.to_dict("records"),selected,basis,elu_current)
 detail=df[df.id==chosen].copy()
 detail['Utilização (%)']=detail.eta*100
 detail['Situação']=detail.eta.map(lambda x:'Atende ao ELS parcial' if x<=1 else 'Não atende')
 st.dataframe(detail[['combination','component','signed_mm','limit_mm','Utilização (%)','Situação','location']].rename(columns={'combination':'Combinação','component':'Componente','signed_mm':'Deslocamento (mm)','limit_mm':'Limite (mm)','location':'Local crítico'}),hide_index=True,width='stretch')
 st.caption('Sinal dos deslocamentos conforme eixos do motor. A utilização considera o módulo do deslocamento. Hx = 0 não verifica a resposta ao vento.')
 with st.expander('Detalhamento e rastreabilidade'):
-    st.json({'versão':r['schema'],'motor':r['engine_id'],'entrada':r['request_sha256'],'erro_relativo_equilibrio_maximo':float(df.balance.max()),'aprovação_estrutural_final':False})
+    st.json({'versão_do_app':r.get('application_version'),'esquema_do_arquivo':r['schema'],'motor':r['engine_id'],'entrada':r['request_sha256'],'erro_relativo_equilibrio_maximo':float(df.balance.max()),'aprovação_estrutural_final':False})
     st.json([x for x in r['full'] if x['hypothesis_id']==chosen],expanded=False)
 st.download_button('Baixar registro completo do cálculo',json.dumps(r,ensure_ascii=False,indent=2,allow_nan=False),file_name='calculo_m23.json',mime='application/json')
 st.caption('Excel e PNG serão adicionados após consolidarmos a apresentação dos resultados. O registro JSON preserva entradas e saídas; esta versão não reabre projetos pela interface.')
