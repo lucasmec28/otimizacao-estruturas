@@ -9,6 +9,8 @@ import service
 import search_profiles
 import diagnostics
 import grid_names
+import ultimate_ui
+import design_basis_ui
 
 
 def plan_svg(p, g):
@@ -70,7 +72,7 @@ def show_plan(p, g):
 
 st.set_page_config(page_title='LRO | Otimização estrutural', page_icon='🏗️', layout='wide')
 st.title('Otimização de estruturas metálicas')
-st.caption('M23-PY-05 · Mezanino · Filas/eixos e diagramas de esforços')
+st.caption('M23-PY-08 · Mezanino · Análises ELS e ELU separadas')
 st.warning('ELS parcial: análise elástica de primeira ordem dos pórticos X e vigas secundárias. Busca entre perfis candidatos disponível; sem ELU, estabilidade global ou análise lateral Y. Atender aqui não significa aprovação estrutural.')
 
 p0, s0 = service.defaults()
@@ -226,6 +228,8 @@ st.bar_chart(ranking.set_index('id')[['kg_m2']],x_label='Hipótese',y_label='Sub
 chosen=st.selectbox('Detalhar hipótese',ranking.id.tolist())
 show_plan(p,next(g for g in geometries if g['id']==chosen))
 diagnostics.show([case for case in r['full'] if case['hypothesis_id']==chosen],'manual_diag_'+str(chosen))
+basis=design_basis_ui.show(p,profiles,int(chosen))
+ultimate_ui.show(p,profiles,int(chosen),basis)
 detail=df[df.id==chosen].copy()
 detail['Utilização (%)']=detail.eta*100
 detail['Situação']=detail.eta.map(lambda x:'Atende ao ELS parcial' if x<=1 else 'Não atende')
