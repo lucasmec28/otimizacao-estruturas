@@ -6,6 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pandas as pd
 import streamlit as st
 import service
+import search_profiles
 
 
 def plan_svg(p, g):
@@ -65,8 +66,8 @@ def show_plan(p, g):
 
 st.set_page_config(page_title='LRO | Otimização estrutural', page_icon='🏗️', layout='wide')
 st.title('Otimização de estruturas metálicas')
-st.caption('M23-PY-02 · Mezanino · Planta e orientação dos espaçamentos')
-st.warning('ELS parcial: análise elástica de primeira ordem dos pórticos X e vigas secundárias. Sem ELU, estabilidade global, análise lateral Y ou seleção automática de perfis. Atender aqui não significa aprovação estrutural.')
+st.caption('M23-PY-03 · Mezanino · Busca de perfis com ELS parcial')
+st.warning('ELS parcial: análise elástica de primeira ordem dos pórticos X e vigas secundárias. Busca entre perfis candidatos disponível; sem ELU, estabilidade global ou análise lateral Y. Atender aqui não significa aprovação estrutural.')
 
 p0, s0 = service.defaults()
 p = {}
@@ -91,6 +92,7 @@ with st.expander('Ações, perfis e limites', expanded=True):
     for col,k,label in [(a,'g_floor_kpa','Permanente do piso (kN/m²)'),(b,'q_floor_kpa','Sobrecarga (kN/m²)'),(c,'hx_total_kn','Força horizontal total X (kN)')]:
         p[k]=col.number_input(label,value=p0[k],step=0.1,key=k)
     st.caption('Peso próprio das barras calculado pelo motor. Hx é distribuído igualmente nos topos das colunas; admite sinal. Ação do piso não integra o subtotal de aço.')
+    st.info('Força horizontal X = soma total aplicada no topo de TODAS as colunas. Cada coluna recebe a mesma parcela, inclusive cantos, bordas e interiores. Não representa carga por fachada nem distribuição por área de influência. O coeficiente HX da combinação multiplica essa força; o sinal define o sentido em X.')
     names=[s['Perfil'] for s in service.catalog()]
     profiles={}
     for col,role,label in [(a,'column','Colunas'),(b,'primary','Vigas principais X'),(c,'secondary','Vigas secundárias Y')]:
@@ -120,12 +122,66 @@ try:
     st.write('As vigas principais seguem **X**. As secundárias seguem **Y**, apoiadas nas principais. A distância entre secundárias é medida em **X**.')
     preview_id=st.selectbox('Visualizar geometria antes do cálculo',[g['id'] for g in geometries],key='preview_'+geometry_key)
     show_plan(p,next(g for g in geometries if g['id']==preview_id))
+    preview_g=next(g for g in geometries if g['id']==preview_id)
+    ncols=preview_g['column_count']
+    st.write(f'**Hx nesta hipótese:** {p["hx_total_kn"]:g} kN ÷ {ncols} colunas = **{p["hx_total_kn"]/ncols:.4f} kN por topo**, antes do coeficiente HX da combinação.')
+    with st.expander('Conferir nós de aplicação da força horizontal'):
+        if ncols>1000:
+            st.info('Tabela não exibida: mais de 1.000 nós. A fórmula de distribuição acima permanece válida.')
+        else:
+            st.dataframe(pd.DataFrame([{'Nó de topo':f'T-{j+1:02d}-{i+1:02d}',
+                'X (m)':i*preview_g['x_spacing_mm']/1000,'Y (m)':j*preview_g['y_spacing_mm']/1000,
+                'Z (m)':p['height_mm']/1000,'Fx antes do coeficiente (kN)':p['hx_total_kn']/ncols}
+                for j in range(preview_g['ny']+1) for i in range(preview_g['nx']+1)]),hide_index=True)
     st.caption('A seleção acima apenas muda o desenho; as hipóteses calculadas são as marcadas na lista anterior. Planta baseada nas entradas atuais.')
     text=service.request(study,p,profiles,combos.to_dict('records'),selected)
 except (ValueError,KeyError,TypeError,OverflowError) as exc:
     st.error(f'Entradas inválidas: {exc}')
     st.stop()
 
+with st.expander('Buscar perfis mais leves — ELS parcial',expanded=False):
+    st.write('Escolha os candidatos de cada grupo. A busca testa todas as combinações desses perfis nas hipóteses selecionadas, recalculando rigidez e peso próprio. Um perfil por grupo em cada solução.')
+    st.caption('Busca exaustiva limitada a 200 casos: hipóteses × combinações de ações × conjuntos de perfis. O mínimo se refere apenas ao conjunto escolhido e às verificações implementadas.')
+    candidates={}
+    for col,role,label in zip(st.columns(3),search_profiles.ROLES,('Candidatos: colunas','Candidatos: principais','Candidatos: secundárias')):
+        candidates[role]=col.multiselect(label,names,default=[profiles[role]],key='candidates_'+role)
+    cases=len(selected)*len(combos)
+    for role in search_profiles.ROLES:cases*=len(candidates[role])
+    st.write(f'**Casos solicitados: {cases} / {search_profiles.MAX_CASES}**')
+    if cases>search_profiles.MAX_CASES:
+        st.warning('Reduza a seleção para executar. Nenhuma hipótese ou perfil será descartado automaticamente.')
+    search_sig=search_profiles.signature(study,p,candidates,combos.to_dict('records'),selected)
+    if st.button('Executar busca de perfis',key='search',disabled=not 1<=cases<=search_profiles.MAX_CASES):
+        st.session_state.pop('search_result',None)
+        bar=st.progress(0.0,text='Testando conjuntos de perfis…')
+        try:
+            st.session_state.search_result=search_profiles.run(study,p,candidates,combos.to_dict('records'),selected,
+                progress=lambda done,total:bar.progress(done/total,text=f'Conjuntos calculados: {done}/{total}'))
+        except Exception as exc:
+            st.error(f'Busca interrompida sem liberar resultado parcial: {exc}')
+        finally:bar.empty()
+    sr=st.session_state.get('search_result')
+    if sr and sr['signature']!=search_sig:
+        st.warning('Dados da busca alterados. Execute novamente para atualizar as alternativas.')
+    elif sr:
+        summaries=pd.DataFrame(sr['summaries'])
+        feasible=summaries[summaries.passes_partial_els]
+        if feasible.empty:
+            st.warning('Nenhuma alternativa atende ao ELS parcial dentro dos candidatos selecionados.')
+        else:
+            best=feasible.iloc[0]
+            st.success(f'Menor subtotal entre as alternativas que atendem ao ELS parcial: {best.kg_m2:.3f} kg/m² · hipótese {int(best.hypothesis)} · solução {int(best.solution)}. ELU e estabilidade ainda pendentes.')
+        display=summaries.copy()
+        display['passes_partial_els']=display.passes_partial_els.map({True:'Atende ao ELS parcial',False:'Não atende'})
+        st.dataframe(display.rename(columns={'solution':'Solução','hypothesis':'Hipótese','column':'Colunas','primary':'Principais','secondary':'Secundárias','subtotal_kg':'Subtotal (kg)','kg_m2':'Subtotal (kg/m²)','eta':'Utilização ELS','passes_partial_els':'Situação','governing_component':'Componente crítico','governing_combination':'Combinação crítica'}),hide_index=True)
+        solution=st.selectbox('Detalhar solução da busca',summaries.solution.tolist(),key='search_detail')
+        ss=next(x for x in sr['summaries'] if x['solution']==solution)
+        st.write(f'Colunas: **{ss["column"]}** · Principais: **{ss["primary"]}** · Secundárias: **{ss["secondary"]}**')
+        show_plan(p,next(g for g in geometries if g['id']==ss['hypothesis']))
+        st.dataframe(pd.DataFrame(next(x for x in sr['details'] if x['solution']==solution)['rows']),hide_index=True)
+        st.download_button('Baixar registro da busca',json.dumps(sr,ensure_ascii=False,indent=2,allow_nan=False),file_name='busca_m23_py03.json',mime='application/json')
+
+st.subheader('Calcular com os perfis fixos informados')
 if st.button('Calcular hipóteses',type='primary',key='calculate'):
     st.session_state.pop('result',None)
     try:
