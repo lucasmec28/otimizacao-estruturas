@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 from mezzanine import Geometry, Section, hypotheses, analyze, divisions
 
-FILES=('bridge_m22.py','mezzanine.py','frame.py','legacy_frame.py','serviceability.py')
+FILES=('bridge_m22.py','mezzanine.py','frame.py','linear_algebra.py','legacy_frame.py','serviceability.py')
 PARAMS=('lx_mm','ly_mm','height_mm','xmin_mm','xmax_mm','ymin_mm','ymax_mm','smin_mm','smax_mm','g_floor_kpa','q_floor_kpa','hx_total_kn','E_mpa','column_limit','primary_limit','secondary_limit')
 FAMILIES=('ELS_RARA','ELS_FREQUENTE','ELS_QUASE_PERMANENTE')
 MAX_CASES=1000
@@ -69,13 +69,15 @@ def parse(text):
     if len(selected)*len(com)>MAX_CASES:raise ValueError(f'MAX_{MAX_CASES}_GEOMETRY_COMBINATION_CASES_SELECT_FEWER')
     if any(3*(g['nx']*g['ns']+g['nx']+2)>600 for g in selected):raise ValueError('MAX_600_DOF_PER_FRAME')
     return dict(parameters=p,sections=s,combinations=com,geometries=geo,study=study)
-def solve(text):
+def solve(text,check_execution=None):
     q=parse(text);p=q['parameters'];s=q['sections'];rows=[];full=[]
     for g in q['geometries']:
         if not g['selected']:continue
+        if check_execution:check_execution()
         geom=Geometry(p['lx_mm'],p['ly_mm'],p['height_mm'],g['nx'],g['ny'],g['ns'])
         pattern=np.full((g['ny']+1,g['nx']+1),p['hx_total_kn']/((g['ny']+1)*(g['nx']+1)))
         for co in q['combinations']:
+            if check_execution:check_execution()
             factors=co['factors'].copy();direction=1 if factors['HX']>=0 else -1;factors['HX']=abs(factors['HX'])
             r=analyze(geom,s['column'],s['primary'],s['secondary'],p['g_floor_kpa'],p['q_floor_kpa'],factors,lateral_x_kn=pattern*direction,column_denominator=p['column_limit'],primary_denominator=p['primary_limit'],secondary_denominator=p['secondary_limit'],E=p['E_mpa'])
             full.append(dict(hypothesis_id=g['id'],combination=co,result=r))

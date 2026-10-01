@@ -1,4 +1,5 @@
 import json
+import check_cache
 import pandas as pd
 import streamlit as st
 import member_strength,grid_names
@@ -22,8 +23,8 @@ def show(elu,basis,conditions):
     st.subheader('Verificações conjuntas N–M e cisalhamento')
     if basis is None or not all(conditions.values()):
         st.info('Preencha materiais/comprimentos e defina as condições de carga e contenção acima.');return
-    try:result=member_strength.evaluate(elu,basis,conditions)
+    try:result=check_cache.get_or_compute('nmv',dict(elu=elu['signature'],basis=basis,conditions=conditions),lambda:member_strength.evaluate(elu,basis,conditions))
     except (ValueError,TypeError,KeyError) as exc:st.error(str(exc));return
     display(result)
     st.warning('Resultado condicional: aplicação normativa do modelo, imperfeições locais, estabilidade Y e efeitos locais ainda pendentes. Tração verifica apenas escoamento bruto e permanece pendente quanto à seção líquida.')
-    st.download_button('Baixar verificações N–M–V',json.dumps(result,ensure_ascii=False,indent=2,allow_nan=False),file_name='verificacoes_nmv_py10.json',mime='application/json',key='nmv_download')
+    st.download_button('Baixar verificações N–M–V',json.dumps(result,ensure_ascii=False,indent=2,allow_nan=False),file_name='verificacoes_nmv_py13.json',mime='application/json',key='nmv_download')

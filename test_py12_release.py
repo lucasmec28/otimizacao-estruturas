@@ -56,18 +56,18 @@ class PY12Tests(unittest.TestCase):
             second_order.calculate(p,s,9,[dict(c['elu'][0],id=f'C_{i}') for i in range(501)])
 
     def test_mixed_and_missing_files_stop_before_importing_ui(self):
-        self.assertEqual(release_check.problems(service.ROOT,'M23-PY-12'),[])
+        self.assertEqual(release_check.problems(service.ROOT,'M23-PY-13'),[])
         with tempfile.TemporaryDirectory() as d:
             root=Path(d)/'app';shutil.copytree(service.ROOT,root,ignore=shutil.ignore_patterns('__pycache__'))
             (root/'ultimate_ui.py').write_text('def show(p,profiles,gid,basis=None):\n    pass\n')
-            problems=release_check.problems(root,'M23-PY-12')
+            problems=release_check.problems(root,'M23-PY-13')
             self.assertTrue(any('ultimate_ui.py' in x for x in problems))
             at=AppTest.from_file(str(root/'app.py')).run()
             self.assertFalse(at.exception)
             self.assertTrue(any('Atualização incompleta' in x.value for x in at.error))
             self.assertFalse(at.number_input)
             (root/'release_manifest.json').unlink()
-            self.assertTrue(any('release_manifest' in x for x in release_check.problems(root,'M23-PY-12')))
+            self.assertTrue(any('release_manifest' in x for x in release_check.problems(root,'M23-PY-13')))
 
     def test_user_geometry_automatic_default_and_elu_no_typeerror(self):
         # Reproduce supplied characteristic actions, profiles and geometry 9.

@@ -127,3 +127,6 @@ As rotinas normativas de cada nova etapa devem ser conferidas diretamente nas fo
 
 
 PY12: limite de 1.000 casos integrado ao motor e às buscas; proteção contra atualização incompleta e modo automático de dados como padrão. Prioridade técnica permanece representar vínculos/contraventamentos reais nas duas direções, determinar comprimentos da concepção e incluir seus pesos.
+
+
+PY13: solver em banda e controle de threads, reutilização exata de pórticos iguais, progresso e limites de tempo, cache de verificações completas. Caso do usuário com 32 combinações e dois sentidos nocionais concluído e comparado à PY12. Mantida prioridade técnica de representar contraventamentos/vínculos reais nas duas direções e computar sua massa.

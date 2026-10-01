@@ -2,6 +2,7 @@
 import itertools
 import json
 import service
+from execution_control import ExecutionBudget
 
 ROLES=('column','primary','secondary')
 MAX_CASES=service.engine.MAX_CASES
@@ -9,11 +10,11 @@ MAX_CASES=service.engine.MAX_CASES
 
 def signature(study,p,candidates,combinations,selected):
     data=dict(study=study,parameters=p,candidates=candidates,combinations=combinations,
-              selected=sorted(selected),engine_id=service.engine.engine_id(),version='M23-PY-12')
+              selected=sorted(selected),engine_id=service.engine.engine_id(),version='M23-PY-13')
     return service.fingerprint(json.dumps(data,sort_keys=True,ensure_ascii=False,allow_nan=False))
 
 
-def run(study,p,candidates,combinations,selected,progress=None):
+def run(study,p,candidates,combinations,selected,progress=None,max_seconds=300.):
     if set(candidates)!=set(ROLES) or any(not candidates[k] for k in ROLES):
         raise ValueError('Selecione ao menos um perfil para cada componente.')
     if any(len(candidates[k])!=len(set(candidates[k])) for k in ROLES):
@@ -28,12 +29,14 @@ def run(study,p,candidates,combinations,selected,progress=None):
     for role in ROLES:count*=len(candidates[role])
     if not 1<=count<=MAX_CASES:
         raise ValueError(f'Busca limitada a {MAX_CASES} casos completos. Solicitados: {count}. Reduza hipóteses, combinações ou perfis. Nada foi truncado.')
+    budget=ExecutionBudget(max_seconds)
     summaries=[];details=[]
     sets=list(itertools.product(*(candidates[k] for k in ROLES)))
     for index,nameset in enumerate(sets,1):
+        budget.check()
         profiles=dict(zip(ROLES,nameset))
         text=service.request(study,p,profiles,combinations,selected)
-        result=service.calculate(text)  # includes own weight for each profile tuple
+        result=service.calculate(text,check_execution=budget.check)  # includes own weight for each profile tuple
         for gid in selected:
             rows=[r for r in result['rows'] if r['id']==gid]
             governing=max(rows,key=lambda r:r['eta'])
@@ -44,12 +47,13 @@ def run(study,p,candidates,combinations,selected,progress=None):
                 governing_component=governing['component'],governing_combination=governing['combination']))
             details.append(dict(solution=sid,rows=rows,request=text,
                 request_sha256=result['request_sha256']))
+        budget.check()
         if progress:progress(index,len(sets))
     summaries.sort(key=lambda r:(r['kg_m2'],r['solution']))
     feasible=[r for r in summaries if r['passes_partial_els']]
     return dict(schema='M23-PY-05-PARTIAL-SEARCH',
         signature=signature(study,p,candidates,combinations,selected),
-        engine_id=service.engine.engine_id(),cases=count,profile_sets=len(sets),
+        elapsed_seconds=budget.elapsed,time_limit_seconds=max_seconds,engine_id=service.engine.engine_id(),cases=count,profile_sets=len(sets),
         all_requested_cases_completed=True,final_design_approved=False,
         best_partial_solution=feasible[0]['solution'] if feasible else None,
         summaries=summaries,details=details,

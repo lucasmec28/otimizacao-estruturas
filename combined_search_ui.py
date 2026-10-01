@@ -18,11 +18,15 @@ def show(p,candidates,els,selected,basis,elu_current):
         st.write('Modelo da busca: **segunda ordem X com nocionais**' if options else 'Modelo da busca: **primeira ordem**')
         count=math.prod(len(v) for v in candidates.values())*len(selected)*(len(els)+directions*len(elu))
         st.write(f'Casos solicitados: **{count} / {combined_search.MAX_CASES}**, contando ELS e os sentidos nocionais ELU. Refinamentos internos acrescentam trabalho.')
+        max_seconds=st.number_input('Prazo máximo da busca conjunta (s)',min_value=30.,max_value=900.,value=300.,step=30.,key='combined_timeout')
         valid=all(conditions.values()) and 0<count<=combined_search.MAX_CASES
         sig=combined_search.signature(p,candidates,els,elu,selected,groups,conditions,options,basis.get("automatic_policy"))
         if st.button('Buscar por ELS e N–M–V',key='combined_run',disabled=not valid):
             st.session_state.pop('combined_result',None);bar=st.progress(0.)
-            try:st.session_state.combined_result=combined_search.run(p,candidates,els,elu,selected,groups,conditions,lambda n,total:bar.progress(n/total),second_order_options=options,basis_policy=basis.get("automatic_policy"))
+            def phase(e):
+                fraction=((e['solution']-1)+e['done']/max(1,e['total']))/e['total_solutions']
+                bar.progress(fraction,text=f"Solução {e['solution']}/{e['total_solutions']} · ELU {e['done']}/{e['total']} · {e['stage']}")
+            try:st.session_state.combined_result=combined_search.run(p,candidates,els,elu,selected,groups,conditions,lambda n,total:bar.progress(n/total),second_order_options=options,basis_policy=basis.get("automatic_policy"),max_seconds=max_seconds,phase_progress=phase)
             except Exception as exc:st.error(f'Busca interrompida sem liberar ranking incompleto: {exc}')
             finally:bar.empty()
         r=st.session_state.get('combined_result')

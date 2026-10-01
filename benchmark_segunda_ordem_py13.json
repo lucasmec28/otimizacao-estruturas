@@ -1,0 +1,33 @@
+{
+  "old_seconds": 16.478999721000037,
+  "new_seconds": 3.9947353370000656,
+  "speed_ratio": 4.125179350023049,
+  "conditions": "Same workspace, one BLAS thread for both versions; wall time. Hosting may differ.",
+  "base_combinations": 32,
+  "total_cases": 64,
+  "max_absolute_differences": {
+    "displacement_mm": 3.6357583610424626e-12,
+    "reactions_N": 1.1990778148174286e-08,
+    "moments_Nmm": 1.1742115020751953e-05,
+    "axial_N": 1.210719347000122e-08,
+    "shear_N": 1.0477378964424133e-08
+  },
+  "new_meshes": [
+    8
+  ],
+  "old_meshes": [
+    8
+  ],
+  "max_mesh_moment_error": 1.511781865516307e-05,
+  "max_mesh_drift_error": 8.983737229316537e-05,
+  "max_balance": 6.274626997875412e-14,
+  "progress_events": 385,
+  "last_progress": {
+    "done": 64,
+    "total": 64,
+    "elapsed": 3.9935547709999355,
+    "stage": "Combinação concluída",
+    "combination": "AUTO_ELUN_00032_NI_PLUS"
+  },
+  "final_design_approved": false
+}

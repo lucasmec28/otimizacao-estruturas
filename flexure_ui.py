@@ -1,4 +1,5 @@
 import json
+import check_cache
 import pandas as pd
 import streamlit as st
 import flexure_check,grid_names
@@ -13,7 +14,7 @@ def show(elu,basis):
     restraint=st.checkbox('Os Lb informados são limites superiores aplicáveis aos trechos de cada grupo e sinal, com contenções eficazes justificadas.',key='flexure_restraints')
     if not (mid and restraint):
         st.info('A comparação fica pendente enquanto estas condições do modelo não forem definidas. Cargas aplicadas em outra altura exigem tratamento ainda não implementado.');return
-    try:result=flexure_check.evaluate(elu,basis,dict(midheight_loads=mid,effective_restraints=restraint))
+    try:result=check_cache.get_or_compute('flexure',dict(elu=elu['signature'],basis=basis,conditions=dict(midheight_loads=mid,effective_restraints=restraint)),lambda:flexure_check.evaluate(elu,basis,dict(midheight_loads=mid,effective_restraints=restraint)))
     except (ValueError,TypeError,KeyError) as exc:
         st.error(str(exc));return
     labels={'WITHIN_ISOLATED_FLEXURE':'Dentro do limite de flexão isolada','EXCEEDS_ISOLATED_FLEXURE':'Excede flexão isolada','PENDING':'Pendente'}
@@ -31,4 +32,4 @@ def show(elu,basis):
             'Situação':labels[r['status']],'Pendência':r.get('reason','')})
     st.dataframe(pd.DataFrame(records),hide_index=True)
     st.warning('Mesmo quando η M ≤ 1, a barra e a estrutura ainda não estão aprovadas. N e V simultâneos são mostrados para rastreabilidade, mas suas interações não foram verificadas.')
-    st.download_button('Baixar comparação de flexão isolada',json.dumps(result,ensure_ascii=False,indent=2,allow_nan=False),file_name='flexao_isolada_py08.json',mime='application/json',key='flexure_download')
+    st.download_button('Baixar comparação de flexão isolada',json.dumps(result,ensure_ascii=False,indent=2,allow_nan=False),file_name='flexao_isolada_py13.json',mime='application/json',key='flexure_download')

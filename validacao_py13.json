@@ -1,0 +1,37 @@
+{
+  "application_version": "M23-PY-13",
+  "python": "3.12.14",
+  "result": "PASS",
+  "tests_passed": 77,
+  "runs": [
+    {
+      "command": "python -m unittest discover",
+      "tests": 68,
+      "failures": 0,
+      "errors": 0,
+      "duration_s": 70.53
+    },
+    {
+      "command": "python -m unittest discover -s engine",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "duration_s": 0.279
+    }
+  ],
+  "new_performance_tests": 8,
+  "user_reports_replayed": true,
+  "user_second_order_base_combinations": 32,
+  "user_second_order_completed_cases": 64,
+  "maximum_cases": 1000,
+  "mesh_tolerance": 0.01,
+  "blas_threads": 1,
+  "scipy": "1.17.0",
+  "threadpoolctl": "3.6.0",
+  "benchmark_file": "benchmark_segunda_ordem_py13.json",
+  "report_check_file": "conferencia_relatorios_usuario_py13.json",
+  "original_generator_test_suite_reexecuted": false,
+  "hosted_deployment_tested": false,
+  "final_design_approved": false,
+  "engine_id": "d93ebaef2b9d13af216c4ce22f1ff19d1e612ab1137face6cdd3601e5b5179ae"
+}

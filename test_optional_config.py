@@ -11,7 +11,7 @@ class OptionalConfigTests(unittest.TestCase):
             root=Path(d)/'app'
             shutil.copytree(service.ROOT,root,ignore=shutil.ignore_patterns('__pycache__'))
             shutil.rmtree(root/'.streamlit')
-            self.assertEqual(release_check.problems(root,'M23-PY-12'),[])
+            self.assertEqual(release_check.problems(root,'M23-PY-13'),[])
             at=AppTest.from_file(str(root/'app.py'),default_timeout=45).run()
             self.assertFalse(at.exception)
             self.assertFalse(at.error)
@@ -25,9 +25,9 @@ class OptionalConfigTests(unittest.TestCase):
             root=Path(d)/'app'
             shutil.copytree(service.ROOT,root,ignore=shutil.ignore_patterns('__pycache__'))
             (root/'engine/frame.py').unlink()
-            self.assertTrue(any('engine/frame.py' in x for x in release_check.problems(root,'M23-PY-12')))
+            self.assertTrue(any('engine/frame.py' in x for x in release_check.problems(root,'M23-PY-13')))
             (root/'ultimate_ui.py').write_text('def show(p,profiles,gid,basis=None):\n    pass\n')
-            self.assertTrue(any('ultimate_ui.py' in x for x in release_check.problems(root,'M23-PY-12')))
+            self.assertTrue(any('ultimate_ui.py' in x for x in release_check.problems(root,'M23-PY-13')))
             self.assertTrue(release_check.problems(root,'OTHER_VERSION'))
 
 if __name__=='__main__':unittest.main()

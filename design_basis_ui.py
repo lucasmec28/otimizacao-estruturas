@@ -1,5 +1,6 @@
 import json
-RELEASE_VERSION='M23-PY-12'
+import check_cache
+RELEASE_VERSION='M23-PY-13'
 import pandas as pd
 import streamlit as st
 import design_basis
@@ -15,7 +16,7 @@ def show(p, profiles, gid):
             st.caption('W/HP deste catálogo: ASTM A572 Grau 50 · fy 345 MPa · fu 450 MPa · G 77000 MPa. Não se aplicam automaticamente a U laminados ou Ue.')
             st.dataframe(pd.DataFrame(result['groups']).drop(columns=['basis']),hide_index=True)
             st.caption('Comprimentos preliminares por hipótese: colunas 2H como referência de balanço; vigas com vão integral, sem crédito a travamentos intermediários. Não são comprimentos críticos obtidos de análise de flambagem. Os vínculos e contenções ainda precisam ser validados no modelo completo.')
-            st.download_button('Baixar dados automáticos de dimensionamento',json.dumps(result,ensure_ascii=False,indent=2,allow_nan=False),file_name='dados_dimensionamento_py12.json',mime='application/json',key='automatic_basis_download')
+            st.download_button('Baixar dados automáticos de dimensionamento',json.dumps(result,ensure_ascii=False,indent=2,allow_nan=False),file_name='dados_dimensionamento_py13.json',mime='application/json',key='automatic_basis_download')
             return result
         st.write('Registre os dados por grupo para a hipótese detalhada. fy, G, comprimentos efetivos, Lb e Cb alimentam as verificações condicionais. fu permanece registrado para futura verificação de seção líquida. Não alteram esforços ou ranking. Zero significa dado não preenchido.')
         st.caption(f'E usado na análise: {p["E_mpa"]:g} MPa. Perfis: '+ ' · '.join(f'{design_basis.ROLES[k]}: {v}' for k,v in profiles.items()))
@@ -46,7 +47,7 @@ def show_demands(result):
     with st.container():
         st.subheader('Extremos ELU por barra — esforços simultâneos')
         st.caption('Mínimo e máximo de cada esforço por barra e combinação, preservando os outros esforços no mesmo ponto. Inclui extremos internos exatos dos polinômios e os dois lados das descontinuidades. Estes pontos não substituem a busca do máximo das equações de interação.')
-        records=design_basis.extrema(result['full'])
+        records=check_cache.get_or_compute('extrema',dict(elu=result['signature']),lambda:design_basis.extrema(result['full']))
         table=pd.DataFrame([{'Combinação':r['combination'],'Barra':grid_names.member(r['member']),
             'Extremo':r['action']+' '+r['extreme'],'Posição (m)':r['x_mm']/1000,
             'Trecho':r['piece_index']+1,'t no trecho':r['t'],
@@ -54,4 +55,4 @@ def show_demands(result):
             'M simultâneo (kN·m)':r['M_Nmm']/1e6} for r in records])
         selected=st.selectbox('Barra dos extremos ELU',list(table['Barra'].unique()),key='demand_member')
         st.dataframe(table[table['Barra']==selected],hide_index=True)
-        st.download_button('Baixar extremos de todas as barras (CSV)',table.to_csv(index=False,sep=';',decimal=',').encode('utf-8-sig'),file_name='extremos_elu_py07.csv',mime='text/csv',key='demand_csv')
+        st.download_button('Baixar extremos de todas as barras (CSV)',table.to_csv(index=False,sep=';',decimal=',').encode('utf-8-sig'),file_name='extremos_elu_py13.csv',mime='text/csv',key='demand_csv')

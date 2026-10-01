@@ -62,7 +62,7 @@ class SecondOrderTests(unittest.TestCase):
         r=combined_search.run(p,{k:[v] for k,v in s.items()},[dict(**c[0],family='ELS_RARA')],c,[1],g,conditions,second_order_options=dict(second_order.DEFAULTS))
         self.assertEqual(r['cases'],3)
         self.assertEqual(len(r['details'][0]['second_order_diagnostics']),2)
-        self.assertEqual(r['details'][0]['nmv']['analysis_schema'],'M23-PY10-SECOND-ORDER-X')
+        self.assertEqual(r['details'][0]['nmv']['analysis_schema'],'M23-PY13-SECOND-ORDER-X')
         direct=second_order.calculate(p,s,1,c)
         import member_strength
         check=member_strength.evaluate(direct,design_basis.make(p,s,1,g),conditions)
@@ -84,7 +84,7 @@ with patch.object(st,'data_editor',return_value=pd.DataFrame([dict(id='TEST',G_S
         at.checkbox(key='elu_confirm').check().run()
         at.button(key='elu_run').click().run()
         self.assertFalse(at.exception)
-        self.assertEqual(at.session_state['elu_result']['schema'],'M23-PY10-SECOND-ORDER-X')
+        self.assertEqual(at.session_state['elu_result']['schema'],'M23-PY13-SECOND-ORDER-X')
         at.number_input(key='so_reduction').set_value(1.).run()
         self.assertTrue(any('Entradas ELU' in w.value for w in at.warning))
 

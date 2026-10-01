@@ -1,0 +1,80 @@
+{
+  "application_version": "M23-PY-13",
+  "original_engine_id": "d723ea4049ad479fb61a8b604aa4fe9c7beeafd8057af874efb46257d3848c14",
+  "current_engine_id": "d93ebaef2b9d13af216c4ce22f1ff19d1e612ab1137face6cdd3601e5b5179ae",
+  "checks": {
+    "ELS": {
+      "cases": 108,
+      "rows": 324,
+      "PASS": true,
+      "max_absolute_differences": {
+        "eta": 2.3071822230491534e-14,
+        "limit_mm": 0.0,
+        "subtotal_kg": 0.0,
+        "kg_m2": 0.0,
+        "absolute_displacement_magnitude_mm": 1.7302825838783065e-13
+      },
+      "changed_governing_location_or_signed_ties": 67,
+      "max_displacement_difference_at_original_governing_point_mm": 2.1671553440683056e-13,
+      "note": "Equivalent symmetric extrema may exchange reported location/sign due to floating point rounding. Magnitudes, limits, utilizations and original critical point verified."
+    },
+    "ELU": {
+      "cases": 32,
+      "PASS": true,
+      "max_absolute_differences": {
+        "N_coefficients": 2.3283064365386963e-10,
+        "V_coefficients": 1.6007106751203537e-10,
+        "M_coefficients": 2.384185791015625e-07,
+        "reaction_N": 1.7462298274040222e-10,
+        "reaction_M_Nmm": 1.9441358745098114e-07
+      },
+      "max_force_balance": 2.4747072280347696e-15
+    },
+    "NMV": {
+      "rows": 928,
+      "exact_reproduction_from_uploaded_ELU": true,
+      "statuses": {
+        "EXCEEDS_IMPLEMENTED_CHECKS": 728,
+        "PENDING": 200
+      },
+      "max_eta": 15.180712588455874,
+      "final_design_approved": false
+    },
+    "isolated_flexure": {
+      "rows": 1404,
+      "exact_reproduction_from_uploaded_ELU": true
+    },
+    "CSV_extrema": {
+      "rows": 5568,
+      "PASS": true,
+      "max_absolute_numeric_difference": 0.0
+    },
+    "search": {
+      "cases": 864,
+      "solutions": 144,
+      "PASS": true,
+      "max_eta_difference": 1.4210854715202004e-14,
+      "best_partial_ELS": {
+        "solution": 66,
+        "hypothesis": 12,
+        "column": "W 150 x 13,0",
+        "primary": "W 200 x 15,0",
+        "secondary": "W 200 x 15,0",
+        "subtotal_kg": 2394.0,
+        "kg_m2": 19.95,
+        "eta": 0.8760720821846791,
+        "passes_partial_els": true,
+        "governing_component": "SECUNDARIA",
+        "governing_combination": "AUTO_ELSF_00001"
+      },
+      "final_design_approved": false
+    },
+    "ELS_files_5_6_identical": true
+  },
+  "timings_seconds": {
+    "els_108_cases_seconds": 4.5653147110001555,
+    "ELU_32_seconds": 0.8066320810000889,
+    "search_864_seconds": 35.81597716600004
+  },
+  "complete_structural_approval": false
+}

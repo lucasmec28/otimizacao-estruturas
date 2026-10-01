@@ -1,35 +1,39 @@
-# Otimização de estruturas metálicas — M23-PY-12
+# Otimização de estruturas metálicas — M23-PY-13
 
-A PY12 aumenta a capacidade para 1.000 casos nas buscas ELS e conjunta ELS + ELU, e também no cálculo com perfis fixos. O aplicativo verifica a integridade dos arquivos antes de abrir a interface, detectando atualizações incompletas. Materiais e comprimentos geométricos preliminares são preenchidos automaticamente por padrão.
+A PY13 trata o consumo de CPU observado na segunda ordem: solver de matriz em banda, controle de threads BLAS, reaproveitamento de pórticos iguais e de resultados completos das verificações durante a navegação. Mantém as equações da análise, rigidez reduzida, forças nocionais e tolerância de convergência de malha em 1%.
 
-## Atualizar o aplicativo existente
+## Atualização
 
-1. Extraia Aplicacao_Python_M23_PY12.zip.
-2. Envie TODO o conteúdo da pasta M23_PY12 à raiz do repositório lucasmec28/otimizacao-estruturas. Substitua os arquivos existentes. Preserve a subpasta engine. A subpasta .streamlit é opcional e contém apenas aparência/configuração geral. Não crie outra pasta M23_PY12 dentro do repositório.
-3. Envie especialmente app.py, ultimate_ui.py, design_basis_ui.py, automatic_basis.py, service.py, search_profiles.py, combined_search.py, second_order.py, release_check.py, release_manifest.json e os arquivos dentro de engine. Atualizar apenas app.py deixa funções de versões anteriores incompatíveis.
-4. Reinicie o aplicativo pelo menu de gerenciamento do Streamlit depois da atualização completa.
-5. Confira M23-PY-12 na tela. Se faltarem arquivos, o app agora informa seus nomes antes de iniciar o cálculo.
+1. Extraia o ZIP e envie TODO o conteúdo de M23_PY13 à raiz do repositório lucasmec28/otimizacao-estruturas, substituindo os arquivos existentes e preservando a subpasta engine. app.py fica na raiz. A configuração .streamlit/config.toml continua opcional.
+2. Envie também os arquivos novos engine/linear_algebra.py, execution_control.py e check_cache.py, além do requirements.txt e do release_manifest.json atualizados.
+3. O Streamlit instalará SciPy e threadpoolctl conforme requirements.txt. Aguarde a atualização das dependências e reinicie o app se necessário.
+4. Confira M23-PY-13 na tela. Não é necessário instalar Python no computador usado para acessar o site.
 
-## Conferir os problemas relatados
+A implantação no GitHub/Streamlit permanece a cargo do usuário; não foi publicada pelo assistente.
 
-- No painel Materiais e comprimentos da concepção, o padrão é Automáticos pela concepção. A tabela é de consulta; não é necessário digitar fy, fu, G, Cb ou comprimentos. O modo Manual avançado é opcional.
-- ELU normal e ELS frequente permanecem selecionadas inicialmente. Informe a natureza da carga permanente e o uso do piso. Se Hx representa vento, selecione Vento — testar +X e −X.
-- A busca ELS conta: hipóteses × conjuntos de perfis × combinações ELS. Com 18 hipóteses, 2 conjuntos e 6 combinações, são 216 casos, permitidos nesta versão.
-- A busca conjunta conta também as combinações ELU e os sentidos nocionais. Com 18 hipóteses, 2 conjuntos, 6 ELS e 32 ELU de primeira ordem, são 1.368 casos: reduza a seleção para caber em 1.000. Nenhuma combinação é eliminada automaticamente.
+## Segunda ordem
 
-Materiais W/HP do catálogo: fy=345 MPa, fu=450 MPa e G=77.000 MPa. Os comprimentos automáticos usam uma política geométrica preliminar: colunas 2H e vigas com seu vão integral, sem crédito a contenções intermediárias. Ainda precisamos representar os vínculos e contraventamentos reais para determinar os comprimentos da concepção com rigor. Essa pendência permanece visível nos resultados; a busca não aprova alternativas com comprimentos preliminares.
+Selecione uma hipótese, mantenha as combinações desejadas e escolha Segunda ordem X com forças nocionais. O app mostra quantidade de casos concluídos, combinação, malha e tempo decorrido. Com 32 combinações e dois sentidos nocionais, serão 64 casos. O prazo inicial é 180 segundos e pode ser ajustado no próprio painel.
 
-O peso é subtotal de colunas e vigas. Não inclui contraventamentos, coletores ou ligações. Não há aprovação estrutural final. JSON de dados automáticos disponível para download; não há reabertura de projetos pela interface.
+Prazo excedido interrompe o cálculo sem liberar resultados incompletos. Esse aviso é diferente de instabilidade, mecanismo ou falta de convergência. A tolerância da malha não foi relaxada para obter velocidade. A análise continua de eixos iniciais, pequenas rotações e rigidez geométrica com força axial média por elemento, restrita ao plano X–Z. Não equivale a análise global 3D ou liberação final da concepção.
 
-A versão ainda precisa de teste na hospedagem do usuário. O assistente não publicou no GitHub ou no Streamlit. Consulte ATUALIZACAO_PY12.md e validacao_py12.json. Documentos PY01–PY11 são históricos.
+A busca conjunta conta ELS + ELU e os dois sentidos nocionais, mantendo o teto de 1.000 casos. Seu prazo inicial é 300 segundos. A busca ELS também tem prazo de 300 segundos. Todas bloqueiam excesso ou interrupção sem liberar ranking parcial.
+
+O aviso Your app has been throttled é da hospedagem e indica redução temporária de CPU. A atualização não remove uma restrição já aplicada. Se o aviso continuar, respeite o prazo mostrado pela plataforma antes de avaliar o desempenho novamente. O tempo medido localmente não é garantia do tempo na hospedagem.
+
+## Conferência dos arquivos recebidos
+
+Os 108 casos ELS e 32 ELU de primeira ordem foram reproduzidos. O CSV de 5.568 extremos corresponde ao relatório ELU. N–M–V (928 linhas) e flexão isolada (1.404 linhas) foram reproduzidos a partir dos esforços enviados. A busca ELS de 864 casos/144 alternativas reproduziu o menor subtotal de 19,95 kg/m², hipótese 12, com colunas W150×13 e vigas principais/secundárias W200×15.
+
+Essa alternativa atende apenas ao ELS parcial. A hipótese detalhada nos relatórios resistentes é a 1, com principais W250×17,9 e secundárias W150×13: é outra configuração e apresentou critérios excedidos. Nenhuma das duas conclusões constitui aprovação estrutural final. Comprimentos automáticos, estabilidade Y e contenções reais continuam pendentes; o peso ainda exclui contraventamentos e coletores.
+
+Registros históricos PY01–PY12 preservados. Consulte ATUALIZACAO_PY13.md e validacao_py13.json para evidências desta versão.
 
 ## Desenvolvimento local
 
 python -m pip install -r requirements.txt
 python -m streamlit run app.py
 python -m unittest discover -p 'test*.py' -v
+python -m unittest discover -s engine -p 'test*.py' -v
 
-release_manifest.json identifica exatamente o código distribuído. Se alterar o código localmente, regenere o manifesto de hashes para a nova versão antes de executá-la. A interface é bloqueada quando os arquivos diferem do pacote declarado.
-
-
-Correção PY12-CORRECAO1: .streamlit/config.toml deixou de ser obrigatório. Para corrigir uma instalação PY12 que informa somente sua ausência, basta substituir release_manifest.json. Equações, limite de 1.000 casos e demais arquivos do aplicativo não foram alterados.
+Python mínimo 3.11 para as dependências atuais. Ambiente de validação: Python 3.12.14. O manifesto verifica os arquivos do pacote antes da análise; alterações locais exigem manifesto correspondente à versão editada.

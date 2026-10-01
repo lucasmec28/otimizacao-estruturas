@@ -63,10 +63,10 @@ def fingerprint(text):
     return hashlib.sha256(engine.normalized(text).encode()).hexdigest()
 
 
-def calculate(text):
-    rows, full = engine.solve(text)
+def calculate(text,check_execution=None):
+    rows, full = engine.solve(text,check_execution=check_execution)
     if any(not 0 <= r[10] <= 1e-8 for r in rows):
         raise ValueError('Falha no equilíbrio de forças. Resultados não liberados.')
-    return dict(schema='M23-PY-05', application_version='M23-PY-12', engine_id=engine.engine_id(), request_sha256=fingerprint(text),
+    return dict(schema='M23-PY-05', application_version='M23-PY-13', engine_id=engine.engine_id(), request_sha256=fingerprint(text),
                 final_design_approved=False, rows=[dict(zip(engine.COLUMNS, r)) for r in rows],
                 full=full, request=text)
