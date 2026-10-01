@@ -1,0 +1,15 @@
+{
+  "version": "M23-PY-07",
+  "python": "3.12.14",
+  "tests_passed": 25,
+  "test_duration_seconds": 13.463,
+  "engine_unchanged_from_py06": true,
+  "requirements_unchanged": true,
+  "new_scope": [
+    "Design input registration",
+    "Exact individual action extrema with simultaneous NVM"
+  ],
+  "new_resistance_checks": false,
+  "final_design_approved": false,
+  "deployed": false
+}

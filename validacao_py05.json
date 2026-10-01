@@ -1,0 +1,13 @@
+{
+  "version": "M23-PY-05",
+  "tests_passed": 15,
+  "uploaded_search_cases_verified": 180,
+  "uploaded_manual_rows_verified": 54,
+  "best_partial_solution": 12,
+  "best_hypothesis": 12,
+  "best_kg_m2": 19.94333333333333,
+  "screenshot_case_hypothesis": 14,
+  "screenshot_absolute_min_mm": -0.495037917056844,
+  "final_design_approved": false,
+  "engine_id": "fe88b10408984fc08a3e62fdfd726256bd2ef38b3b875d2f6f73dcde65a870bb"
+}

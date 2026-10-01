@@ -1,0 +1,36 @@
+{
+  "version": "M23-PY-12",
+  "python": "3.12.14",
+  "result": "PASS",
+  "tests_passed": 67,
+  "runs": [
+    {
+      "command": "python -m unittest discover",
+      "tests": 58,
+      "failures": 0,
+      "errors": 0,
+      "duration_s": 101.88
+    },
+    {
+      "command": "python -m unittest discover -s engine",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "duration_s": 0.326
+    }
+  ],
+  "new_tests": 6,
+  "maximum_cases": 1000,
+  "real_execution_checks": {
+    "fixed_els_geometry_combination_pairs": 288,
+    "els_search_cases": 216,
+    "combined_search_cases": 228,
+    "native_1000_case_inputs_accepted": true,
+    "excess_inputs_rejected_without_truncation": true
+  },
+  "mixed_version_guard_tested": true,
+  "automatic_data_flow_with_user_geometry_tested": true,
+  "hosted_streamlit_deployment_tested": false,
+  "final_design_approved": false,
+  "engine_id": "d723ea4049ad479fb61a8b604aa4fe9c7beeafd8057af874efb46257d3848c14"
+}

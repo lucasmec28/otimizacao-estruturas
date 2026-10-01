@@ -1,0 +1,17 @@
+{
+  "version": "M23-PY-12",
+  "package_revision": "PY12-CORRECAO1",
+  "result": "PASS",
+  "specific_tests_passed": 2,
+  "test_command": "python -m unittest test_optional_config",
+  "duration_seconds": 3.97,
+  "checks": [
+    "Startup and ELS calculation succeed without .streamlit/config.toml",
+    "Missing or changed calculation files remain blocked",
+    "Different manifest version remains blocked"
+  ],
+  "existing_python_files_changed": [],
+  "original_67_tests_reexecuted": false,
+  "structural_equations_changed": false,
+  "hosted_deployment_tested": false
+}

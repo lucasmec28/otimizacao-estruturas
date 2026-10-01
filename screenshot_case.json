@@ -1,0 +1,36 @@
+{
+  "parameters": {
+    "lx_mm": 12000.0,
+    "ly_mm": 10000.0,
+    "height_mm": 3000.0,
+    "xmin_mm": 3000.0,
+    "xmax_mm": 6000.0,
+    "ymin_mm": 3000.0,
+    "ymax_mm": 5000.0,
+    "smin_mm": 1000.0,
+    "smax_mm": 2000.0,
+    "g_floor_kpa": 0.5,
+    "q_floor_kpa": 3.0,
+    "hx_total_kn": 1.0,
+    "E_mpa": 200000.0,
+    "column_limit": 400.0,
+    "primary_limit": 350.0,
+    "secondary_limit": 350.0
+  },
+  "combinations": [
+    {
+      "id": "DEMO_G_Q",
+      "family": "ELS_QUASE_PERMANENTE",
+      "G_STEEL": 1.0,
+      "G_FLOOR": 1.0,
+      "Q": 0.7,
+      "HX": 1.0
+    }
+  ],
+  "profiles": {
+    "column": "W 150 x 13,0",
+    "primary": "W 250 x 22,3",
+    "secondary": "W 150 x 13,0"
+  },
+  "hypothesis": 14
+}

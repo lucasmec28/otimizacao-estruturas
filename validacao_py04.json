@@ -1,0 +1,9 @@
+{
+  "version": "M23-PY-04",
+  "tests_passed": 10,
+  "engine_changed": "additional base reactions, displacement polynomial outputs and moment equilibrium check",
+  "engine_id": "b3cdd9a9df60ef40b4482d9d1f392d1fe6a728b910c7e75a438fbe0c803a3926",
+  "previous_numerical_results_regression": "PASS",
+  "maximum_search_cases": 200,
+  "final_design_approved": false
+}
