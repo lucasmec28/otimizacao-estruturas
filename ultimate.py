@@ -15,7 +15,7 @@ def calculate(p,profiles,gid,combinations):
     validation=service.request('VALIDAÇÃO DE ENTRADAS',p,profiles,
         [dict(id='VALIDATION_ONLY',family='ELS_RARA',G_STEEL=1,G_FLOOR=1,Q=1,HX=1)],[gid])
     data=service.engine.parse(validation)
-    if not 1<=len(combinations)<=200:raise ValueError('Informe de 1 a 200 combinações ELU.')
+    if not 1<=len(combinations)<=service.engine.MAX_CASES:raise ValueError(f'Informe de 1 a {service.engine.MAX_CASES} combinações ELU.')
     seen=set()
     for c in combinations:
         cid=service.engine.text_ok(c['id'])

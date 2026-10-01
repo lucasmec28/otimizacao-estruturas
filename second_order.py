@@ -103,6 +103,8 @@ def signature(p,profiles,gid,combinations,options):
 
 def calculate(p,profiles,gid,combinations,options=None):
     options=dict(DEFAULTS if options is None else options);validate(options)
+    cases=len(combinations)*(2 if options['notional_ratio'] else 1)
+    if cases>service.engine.MAX_CASES:raise ValueError(f'{cases} casos ELU excedem {service.engine.MAX_CASES}, contando sentidos nocionais. Nada foi truncado.')
     baseline=ultimate.calculate(p,profiles,gid,combinations) # validates inputs + secondary diagrams/mass
     full=[];diagnostics=[]
     signs=(-1,1) if options['notional_ratio'] else (1,)

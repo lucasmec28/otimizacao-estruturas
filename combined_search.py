@@ -4,11 +4,11 @@ import math
 import second_order
 import automatic_basis
 import service,ultimate,design_basis,member_strength,search_profiles
-MAX_CASES=200
+MAX_CASES=service.engine.MAX_CASES
 
 
 def signature(p,candidates,els,elu,selected,groups,conditions,second_order_options=None,basis_policy=None):
-    return design_basis.fingerprint(dict(version='PY11',basis_policy=basis_policy,second_order_options=second_order_options,engine=service.engine.engine_id(),catalog=service.catalog(),
+    return design_basis.fingerprint(dict(version='PY12',basis_policy=basis_policy,second_order_options=second_order_options,engine=service.engine.engine_id(),catalog=service.catalog(),
         p=p,candidates=candidates,els=els,elu=elu,selected=selected,groups=groups,conditions=conditions))
 
 
@@ -53,7 +53,7 @@ def run(p,candidates,els,elu,selected,groups,conditions,progress=None,second_ord
             if progress:progress(done,total)
     summaries.sort(key=lambda r:(r['kg_m2'],r['solution']))
     suitable=[r for r in summaries if r['within_conditional_scope']]
-    return dict(schema='M23-PY11-CONDITIONAL-SEARCH',basis_policy=basis_policy,second_order_options=second_order_options,signature=signature(p,candidates,els,elu,selected,groups,conditions,second_order_options,basis_policy),
+    return dict(schema='M23-PY12-CONDITIONAL-SEARCH',basis_policy=basis_policy,second_order_options=second_order_options,signature=signature(p,candidates,els,elu,selected,groups,conditions,second_order_options,basis_policy),
         cases=count,all_requested_cases_completed=True,final_design_approved=False,
         best_conditional_solution=suitable[0]['solution'] if suitable else None,summaries=summaries,details=details,
         inputs=dict(parameters=p,candidates=candidates,els=els,elu=elu,selected=selected,groups=groups,conditions=conditions),

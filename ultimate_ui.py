@@ -1,4 +1,5 @@
 import json
+RELEASE_VERSION='M23-PY-12'
 import pandas as pd
 import streamlit as st
 import altair as alt
@@ -65,6 +66,6 @@ def show(p,profiles,gid,basis=None,generated=None):
         chart=alt.Chart(values).mark_line().encode(x=alt.X('Posição (m):Q',axis=alt.Axis(tickCount=7)),y=alt.Y('Valor:Q',title=f'{quantity} ({unit})'),detail='Trecho:N',order='Posição (m):Q',tooltip=['Posição (m):Q','Valor:Q'])
         st.altair_chart(chart,width='stretch')
         st.caption('N positivo em tração. Na segunda ordem, M é recuperado por equilíbrio com o termo P–δ, e V = dM/ds; não se reutiliza a parábola de primeira ordem. Nas secundárias, N = 0 por hipótese de flexão biapoiada.')
-        st.download_button('Baixar análise ELU preliminar',json.dumps(result,ensure_ascii=False,indent=2,allow_nan=False),file_name='analise_elu_py11.json',mime='application/json')
+        st.download_button('Baixar análise ELU preliminar',json.dumps(result,ensure_ascii=False,indent=2,allow_nan=False),file_name='analise_elu_py12.json',mime='application/json')
 
         return result

@@ -10,7 +10,7 @@ def show(p,candidates,els,selected,basis,elu_current):
         st.write('Usa as listas de candidatos da busca ELS, as hipóteses selecionadas e as combinações ELU do painel acima. Recalcula esforços, rigidez e peso próprio em cada conjunto de perfis.')
         st.caption('No modo automático, os comprimentos são recalculados para cada hipótese. No modo manual, os valores informados se aplicam ao conjunto inteiro. O ranking é condicional; utiliza o modelo ELU selecionado acima. Estabilidade Y e demais pendências permanecem.')
         if basis is None or elu_current is None:
-            st.info('Calcule uma hipótese ELU acima para definir as combinações e preencha os dados de dimensionamento.');return
+            st.info('Calcule uma hipótese ELU acima para definir as combinações e confira os dados automáticos de dimensionamento.');return
         conditions=dict(midheight_loads=st.session_state.get('flexure_midheight',False),effective_restraints=st.session_state.get('flexure_restraints',False))
         elu=elu_current['inputs']['combinations'];groups=basis['groups']
         options=elu_current.get('options')
@@ -38,4 +38,4 @@ def show(p,candidates,els,selected,basis,elu_current):
         st.dataframe(rows.rename(columns={'solution':'Solução','hypothesis':'Hipótese','kg_m2':'kg/m²','within_conditional_scope':'Atende ao escopo condicional','pending_members':'Barras com pendências'}),hide_index=True)
         sid=st.selectbox('Detalhar verificações da busca conjunta',rows.solution.tolist(),key='combined_detail')
         member_strength_ui.display(next(d['nmv'] for d in r['details'] if d['solution']==sid))
-        st.download_button('Baixar busca conjunta',json.dumps(r,ensure_ascii=False,indent=2,allow_nan=False),file_name='busca_conjunta_py11.json',mime='application/json',key='combined_download')
+        st.download_button('Baixar busca conjunta',json.dumps(r,ensure_ascii=False,indent=2,allow_nan=False),file_name='busca_conjunta_py12.json',mime='application/json',key='combined_download')

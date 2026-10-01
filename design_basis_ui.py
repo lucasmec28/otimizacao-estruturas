@@ -1,4 +1,5 @@
 import json
+RELEASE_VERSION='M23-PY-12'
 import pandas as pd
 import streamlit as st
 import design_basis
@@ -14,6 +15,7 @@ def show(p, profiles, gid):
             st.caption('W/HP deste catálogo: ASTM A572 Grau 50 · fy 345 MPa · fu 450 MPa · G 77000 MPa. Não se aplicam automaticamente a U laminados ou Ue.')
             st.dataframe(pd.DataFrame(result['groups']).drop(columns=['basis']),hide_index=True)
             st.caption('Comprimentos preliminares por hipótese: colunas 2H como referência de balanço; vigas com vão integral, sem crédito a travamentos intermediários. Não são comprimentos críticos obtidos de análise de flambagem. Os vínculos e contenções ainda precisam ser validados no modelo completo.')
+            st.download_button('Baixar dados automáticos de dimensionamento',json.dumps(result,ensure_ascii=False,indent=2,allow_nan=False),file_name='dados_dimensionamento_py12.json',mime='application/json',key='automatic_basis_download')
             return result
         st.write('Registre os dados por grupo para a hipótese detalhada. fy, G, comprimentos efetivos, Lb e Cb alimentam as verificações condicionais. fu permanece registrado para futura verificação de seção líquida. Não alteram esforços ou ranking. Zero significa dado não preenchido.')
         st.caption(f'E usado na análise: {p["E_mpa"]:g} MPa. Perfis: '+ ' · '.join(f'{design_basis.ROLES[k]}: {v}' for k,v in profiles.items()))

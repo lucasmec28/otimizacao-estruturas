@@ -29,7 +29,7 @@ class SearchTests(unittest.TestCase):
         self.p['primary_limit']=1e8
         r=search.run('TESTE',self.p,self.c,self.com,[1])
         self.assertIsNone(r['best_partial_solution'])
-        c={k:[s['Perfil'] for s in service.catalog()][:6] for k in search.ROLES}
+        c={k:[s['Perfil'] for s in service.catalog()][:11] for k in search.ROLES}
         with self.assertRaisesRegex(ValueError,'limitada'):
             search.run('TESTE',self.p,c,self.com,[1])
         c['column']=[]

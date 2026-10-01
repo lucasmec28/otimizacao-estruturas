@@ -4,12 +4,12 @@ import json
 import service
 
 ROLES=('column','primary','secondary')
-MAX_CASES=200
+MAX_CASES=service.engine.MAX_CASES
 
 
 def signature(study,p,candidates,combinations,selected):
     data=dict(study=study,parameters=p,candidates=candidates,combinations=combinations,
-              selected=sorted(selected),engine_id=service.engine.engine_id(),version='M23-PY-05')
+              selected=sorted(selected),engine_id=service.engine.engine_id(),version='M23-PY-12')
     return service.fingerprint(json.dumps(data,sort_keys=True,ensure_ascii=False,allow_nan=False))
 
 

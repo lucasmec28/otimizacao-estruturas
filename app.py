@@ -5,6 +5,24 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pandas as pd
 import streamlit as st
+st.set_page_config(page_title='LRO | Otimização estrutural', page_icon='🏗️', layout='wide')
+RELEASE_VERSION='M23-PY-12'
+try:
+    import release_check
+    release_problems=release_check.problems(Path(__file__).resolve().parent,RELEASE_VERSION)
+except (ImportError,OSError,ValueError) as exc:
+    st.error('Atualização incompleta: envie todos os arquivos da pasta M23_PY12, incluindo release_check.py e release_manifest.json.')
+    st.stop()
+if release_problems:
+    st.error('Atualização incompleta ou arquivos alterados. Estes arquivos não correspondem à PY12:')
+    st.code('\n'.join(release_problems))
+    st.info('Substitua o conteúdo da raiz e da pasta engine pelo pacote completo. Depois reinicie o app no Streamlit.')
+    st.stop()
+if st.session_state.get('loaded_release')!=RELEASE_VERSION:
+    for k in ('result','search_result','elu_result','combined_result','search_diagnostics_result'):
+        st.session_state.pop(k,None)
+    st.session_state['basis_mode']='Automáticos pela concepção'
+    st.session_state['loaded_release']=RELEASE_VERSION
 import service
 import search_profiles
 import diagnostics
@@ -13,6 +31,9 @@ import ultimate_ui
 import combinations_ui
 import combined_search_ui
 import design_basis_ui
+if any(getattr(module,'RELEASE_VERSION',None)!=RELEASE_VERSION for module in (ultimate_ui,design_basis_ui)):
+    st.error('Arquivos PY12 conferidos, mas o processo ainda mantém módulos antigos. Reinicie o app no Streamlit para carregar a atualização.')
+    st.stop()
 
 
 def plan_svg(p, g):
@@ -72,9 +93,9 @@ def show_plan(p, g):
     st.image(plan_svg(p,g),width='stretch')
     st.caption('Azul: principais em X. Verde: secundárias em Y, biapoiadas em cada vão Y. Quadrados: colunas. Cruzamentos intermediários são apoios das secundárias nas principais, sem coluna adicional.')
 
-st.set_page_config(page_title='LRO | Otimização estrutural', page_icon='🏗️', layout='wide')
+
 st.title('Otimização de estruturas metálicas')
-st.caption('M23-PY-11 · Mezanino · Análises ELS e ELU separadas')
+st.caption('M23-PY-12 · Mezanino · Análises ELS e ELU separadas')
 st.warning('Mezanino com opção de segunda ordem X: ELS e verificações ELU condicionais de N–M e cisalhamento. Busca conjunta disponível. Aplicabilidade normativa, imperfeições locais e estabilidade global/Y ainda pendentes; não há aprovação estrutural final.')
 
 p0, s0 = service.defaults()
@@ -125,7 +146,7 @@ try:
     st.subheader('Hipóteses geométricas')
     geometry_key=service.fingerprint(json.dumps({k:p[k] for k in list(p0)[:9]},sort_keys=True))
     selected=st.multiselect('Hipóteses a calcular',options=[g['id'] for g in geometries],default=[g['id'] for g in geometries],key='selection_'+geometry_key)
-    st.caption(f'{len(geometries)} hipóteses geradas · {len(selected)} selecionadas · limite de 200 pares hipótese × combinação.')
+    st.caption(f'{len(geometries)} hipóteses geradas · {len(selected)} selecionadas · limite de 1.000 pares hipótese × combinação.')
     geo=pd.DataFrame([{'Hipótese':g['id'],'Vãos X':g['nx'],'Vãos Y':g['ny'],'Intervalos secundários/vão X':g['secondary_intervals_per_x_bay'],'Espaçamento X (m)':g['x_spacing_mm']/1000,'Espaçamento Y (m)':g['y_spacing_mm']/1000,'Espaçamento secundárias (m)':g['secondary_spacing_mm']/1000,'Colunas':g['column_count']} for g in geometries])
     with st.expander('Consultar modulações'):
         st.dataframe(geo,hide_index=True,width='stretch')
@@ -152,7 +173,7 @@ except (ValueError,KeyError,TypeError,OverflowError) as exc:
 
 with st.expander('Buscar perfis mais leves — ELS parcial',expanded=False):
     st.write('Escolha os candidatos de cada grupo. A busca testa todas as combinações desses perfis nas hipóteses selecionadas, recalculando rigidez e peso próprio. Um perfil por grupo em cada solução.')
-    st.caption('Busca exaustiva limitada a 200 casos: hipóteses × combinações de ações × conjuntos de perfis. O mínimo se refere apenas ao conjunto escolhido e às verificações implementadas.')
+    st.caption('Busca exaustiva limitada a 1.000 casos: hipóteses × combinações de ações × conjuntos de perfis. O mínimo se refere apenas ao conjunto escolhido e às verificações implementadas.')
     candidates={}
     for col,role,label in zip(st.columns(3),search_profiles.ROLES,('Candidatos: colunas','Candidatos: principais','Candidatos: secundárias')):
         candidates[role]=col.multiselect(label,names,default=[profiles[role]],key='candidates_'+role)

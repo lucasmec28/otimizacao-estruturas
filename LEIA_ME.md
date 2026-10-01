@@ -1,30 +1,32 @@
-# Otimização de estruturas metálicas — M23-PY-11
+# Otimização de estruturas metálicas — M23-PY-12
 
-Aplicativo Streamlit para estudo de mezaninos W/HP. Inclui o gerador de combinações enviado pelo usuário, adaptado aos canais de ações do modelo. ELU normal e ELS frequente são selecionadas inicialmente. ELS rara e quase permanente são opcionais; o modo manual continua disponível.
+A PY12 aumenta a capacidade para 1.000 casos nas buscas ELS e conjunta ELS + ELU, e também no cálculo com perfis fixos. O aplicativo verifica a integridade dos arquivos antes de abrir a interface, detectando atualizações incompletas. Materiais e comprimentos geométricos preliminares são preenchidos automaticamente por padrão.
 
-## Atualizar e testar
+## Atualizar o aplicativo existente
 
-1. Extraia o ZIP e envie o CONTEÚDO de M23_PY11 à raiz do repositório, onde já existe app.py. Substitua arquivos homônimos e preserve as pastas. Não envie o ZIP nem crie outra pasta em volta do aplicativo.
-2. Após a atualização do Streamlit, confira M23-PY-11 na tela.
-3. Confira a geometria, as ações características, a natureza da carga permanente do piso e o uso do piso para os fatores ψ. Os valores iniciais são demonstrativos; não se deduz a categoria de uso apenas da magnitude da sobrecarga.
-4. Mantenha Automática / ELU normal + ELS frequente, ou selecione as outras famílias desejadas. Se Hx for diferente de zero, indique se representa vento. Outros tipos horizontais exigem o modo manual avançado. Hx permanece a força TOTAL distribuída igualmente entre todos os topos.
-5. Confira a tabela de coeficientes. Calcule hipóteses, escolha uma para detalhar e abra o painel ELU. As combinações já estão preenchidas pelo gerador. Confira o modelo de primeira/segunda ordem antes de executar.
-6. Materiais W/HP já são preenchidos. Os comprimentos automáticos são PRELIMINARES e mudam com a geometria; ainda não constituem determinação dos comprimentos críticos pela estabilidade do conjunto.
-7. Para buscar perfis, selecione candidatos e hipóteses. O limite conjunto continua 200 casos, contando ELS e ELU (e os dois sentidos nocionais na segunda ordem). O app não descarta combinações para caber no limite. Com vento, poderá ser necessário reduzir as hipóteses por execução.
-8. Baixe os registros JSON de combinações, ELS, ELU e busca para conferência. Não há reabertura de projetos pela interface nem salvamento automático de sessões.
+1. Extraia Aplicacao_Python_M23_PY12.zip.
+2. Envie TODO o conteúdo da pasta M23_PY12 à raiz do repositório lucasmec28/otimizacao-estruturas. Substitua os arquivos existentes. Preserve as subpastas engine e .streamlit. Não crie outra pasta M23_PY12 dentro do repositório.
+3. Envie especialmente app.py, ultimate_ui.py, design_basis_ui.py, automatic_basis.py, service.py, search_profiles.py, combined_search.py, second_order.py, release_check.py, release_manifest.json e os arquivos dentro de engine. Atualizar apenas app.py deixa funções de versões anteriores incompatíveis.
+4. Reinicie o aplicativo pelo menu de gerenciamento do Streamlit depois da atualização completa.
+5. Confira M23-PY-12 na tela. Se faltarem arquivos, o app agora informa seus nomes antes de iniciar o cálculo.
 
-O pacote não foi publicado no GitHub ou Streamlit pelo assistente. Nenhuma instalação é necessária no computador usado para acessar o site.
+## Conferir os problemas relatados
 
-## Limites de interpretação
+- No painel Materiais e comprimentos da concepção, o padrão é Automáticos pela concepção. A tabela é de consulta; não é necessário digitar fy, fu, G, Cb ou comprimentos. O modo Manual avançado é opcional.
+- ELU normal e ELS frequente permanecem selecionadas inicialmente. Informe a natureza da carga permanente e o uso do piso. Se Hx representa vento, selecione Vento — testar +X e −X.
+- A busca ELS conta: hipóteses × conjuntos de perfis × combinações ELS. Com 18 hipóteses, 2 conjuntos e 6 combinações, são 216 casos, permitidos nesta versão.
+- A busca conjunta conta também as combinações ELU e os sentidos nocionais. Com 18 hipóteses, 2 conjuntos, 6 ELS e 32 ELU de primeira ordem, são 1.368 casos: reduza a seleção para caber em 1.000. Nenhuma combinação é eliminada automaticamente.
 
-A estabilidade Y, as contenções reais e a determinação dos comprimentos efetivos continuam pendentes. Por isso, o modo de comprimentos automáticos mantém as verificações resistentes como preliminares e não produz uma alternativa aprovada na busca condicional. Os valores calculados servem para inspecionar o estudo. Não basta um índice menor que 1 para remover essa pendência.
+Materiais W/HP do catálogo: fy=345 MPa, fu=450 MPa e G=77.000 MPa. Os comprimentos automáticos usam uma política geométrica preliminar: colunas 2H e vigas com seu vão integral, sem crédito a contenções intermediárias. Ainda precisamos representar os vínculos e contraventamentos reais para determinar os comprimentos da concepção com rigor. Essa pendência permanece visível nos resultados; a busca não aprova alternativas com comprimentos preliminares.
 
-O peso ainda é subtotal de colunas e vigas; não inclui contraventamentos, coletores ou ligações. O gerador aplica fatores às ações existentes: não calcula o vento característico nem cria ações que o modelo não tem. Sobrecarga alternada por vãos, temperatura, sismo, situações especiais, construção e excepcionais não foram integrados ao modelo automático nesta etapa.
+O peso é subtotal de colunas e vigas. Não inclui contraventamentos, coletores ou ligações. Não há aprovação estrutural final. JSON de dados automáticos disponível para download; não há reabertura de projetos pela interface.
 
-Detalhes e validação em ATUALIZACAO_PY11.md. Documentos PY01–PY10 são históricos.
+A versão ainda precisa de teste na hospedagem do usuário. O assistente não publicou no GitHub ou no Streamlit. Consulte ATUALIZACAO_PY12.md e validacao_py12.json. Documentos PY01–PY11 são históricos.
 
 ## Desenvolvimento local
 
 python -m pip install -r requirements.txt
 python -m streamlit run app.py
 python -m unittest discover -p 'test*.py' -v
+
+release_manifest.json identifica exatamente o código distribuído. Se alterar o código localmente, regenere o manifesto de hashes para a nova versão antes de executá-la. A interface é bloqueada quando os arquivos diferem do pacote declarado.

@@ -7,6 +7,8 @@ from mezzanine import Geometry, Section, hypotheses, analyze, divisions
 FILES=('bridge_m22.py','mezzanine.py','frame.py','legacy_frame.py','serviceability.py')
 PARAMS=('lx_mm','ly_mm','height_mm','xmin_mm','xmax_mm','ymin_mm','ymax_mm','smin_mm','smax_mm','g_floor_kpa','q_floor_kpa','hx_total_kn','E_mpa','column_limit','primary_limit','secondary_limit')
 FAMILIES=('ELS_RARA','ELS_FREQUENTE','ELS_QUASE_PERMANENTE')
+MAX_CASES=1000
+MAX_COMBINATIONS=1000
 COMPONENTS=('COLUNA_X','PRINCIPAL','SECUNDARIA')
 COLUMNS=('id','combination','family','component','signed_mm','limit_mm','eta','location','subtotal_kg','kg_m2','balance','horizontal_action')
 def engine_id():
@@ -51,7 +53,7 @@ def parse(text):
         else:raise ValueError('UNKNOWN_RECORD: '+tag)
     if set(p)!=set(PARAMS) or len(s)!=3 or study is None:raise ValueError('MISSING_INPUTS')
     if any(p[k]<=0 for k in PARAMS if k not in ('g_floor_kpa','q_floor_kpa','hx_total_kn')) or min(p['g_floor_kpa'],p['q_floor_kpa'])<0:raise ValueError('INVALID_INPUT_DOMAIN')
-    if not 1<=len(com)<=20 or len({c['id'] for c in com})!=len(com):raise ValueError('INVALID_COMBINATIONS')
+    if not 1<=len(com)<=MAX_COMBINATIONS or len({c['id'] for c in com})!=len(com):raise ValueError('INVALID_COMBINATIONS')
     if any(min(c['factors'][k] for k in ('G_STEEL','G_FLOOR','Q'))<0 for c in com):raise ValueError('NEGATIVE_GRAVITY_FACTOR')
     # Bound the generator before enumerating and report resource limits explicitly.
     if any(p[f'{axis}min_mm']>p[f'{axis}max_mm'] for axis in ('x','y','s')):raise ValueError('REVERSED_SPACING_RANGE')
@@ -64,7 +66,7 @@ def parse(text):
         if [g[k] for k in ('id','nx','ny','ns')]!=[h[k] for k in ('id','nx','ny','secondary_intervals_per_x_bay')]:raise ValueError('GEOMETRY_MISMATCH')
     selected=[g for g in geo if g['selected']]
     if not selected:raise ValueError('NO_GEOMETRIES_SELECTED')
-    if len(selected)*len(com)>200:raise ValueError('MAX_200_GEOMETRY_COMBINATION_CASES_SELECT_FEWER')
+    if len(selected)*len(com)>MAX_CASES:raise ValueError(f'MAX_{MAX_CASES}_GEOMETRY_COMBINATION_CASES_SELECT_FEWER')
     if any(3*(g['nx']*g['ns']+g['nx']+2)>600 for g in selected):raise ValueError('MAX_600_DOF_PER_FRAME')
     return dict(parameters=p,sections=s,combinations=com,geometries=geo,study=study)
 def solve(text):

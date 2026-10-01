@@ -56,9 +56,9 @@ class BridgeTests(unittest.TestCase):
         for r in self.lines:
             if r[0]=='GEOM':r[5]='SIM'
         c=next(r for r in self.lines if r[0]=='COMB')
-        for k in range(11):
+        for k in range(55):
             row=c.copy();row[1]=f'EXTRA_{k}';self.lines.append(row)
-        with self.assertRaisesRegex(ValueError,'MAX_200'):b.parse(self.text())
+        with self.assertRaisesRegex(ValueError,'MAX_1000'):b.parse(self.text())
     def test_zero_factor_valid_blank_rejected(self):
         c=next(r for r in self.lines if r[0]=='COMB');c[5]='0';b.parse(self.text());c[5]=''
         with self.assertRaisesRegex(ValueError,'INVALID_NUMBER'):b.parse(self.text())

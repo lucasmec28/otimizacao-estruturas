@@ -124,3 +124,6 @@ M23-PY-03 entrega o primeiro mecanismo de busca. O próximo incremento deve prio
 - buildingSMART, IFC: https://technical.buildingsmart.org/standards/ifc/
 
 As rotinas normativas de cada nova etapa devem ser conferidas diretamente nas fontes vigentes disponibilizadas para o projeto antes da implementação.
+
+
+PY12: limite de 1.000 casos integrado ao motor e às buscas; proteção contra atualização incompleta e modo automático de dados como padrão. Prioridade técnica permanece representar vínculos/contraventamentos reais nas duas direções, determinar comprimentos da concepção e incluir seus pesos.
